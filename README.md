@@ -1,4 +1,4 @@
-# Safe Akka [![Build Status](https://travis-ci.org/evolution-gaming/safe-akka.svg)](https://travis-ci.org/evolution-gaming/safe-akka) [![Coverage Status](https://coveralls.io/repos/evolution-gaming/safe-akka/badge.svg)](https://coveralls.io/r/evolution-gaming/safe-akka) [ ![version](https://api.bintray.com/packages/evolutiongaming/maven/safe-akka/images/download.svg) ](https://bintray.com/evolutiongaming/maven/safe-actor/_latestVersion)
+# Safe Akka [![Build Status](https://travis-ci.org/evolution-gaming/safe-akka.svg)](https://travis-ci.org/evolution-gaming/safe-akka) [![Coverage Status](https://coveralls.io/repos/evolution-gaming/safe-akka/badge.svg)](https://coveralls.io/r/evolution-gaming/safe-akka) [ ![version](https://api.bintray.com/packages/evolutiongaming/maven/safe-akka/images/download.svg) ](https://bintray.com/evolutiongaming/maven/safe-akka/_latestVersion)
 
 This library provides abstraction on top of akka actors in order to add more type safety
 
