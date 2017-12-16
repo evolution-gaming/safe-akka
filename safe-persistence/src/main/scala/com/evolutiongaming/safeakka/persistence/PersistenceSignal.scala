@@ -11,16 +11,24 @@ object PersistenceSignal {
 
   sealed trait System extends PersistenceSignal[Nothing]
 
+
   sealed trait SnapshotResponse extends System
 
   case class SaveSnapshotFailure(metadata: SnapshotMetadata, cause: Throwable) extends SnapshotResponse
   case class SaveSnapshotSuccess(metadata: SnapshotMetadata) extends SnapshotResponse
 
-  case class DeleteSnapshotSuccess(metadata: SnapshotMetadata) extends SnapshotResponse
-  case class DeleteSnapshotsSuccess(criteria: SnapshotSelectionCriteria) extends SnapshotResponse
 
+  case class DeleteSnapshotSuccess(metadata: SnapshotMetadata) extends SnapshotResponse
   case class DeleteSnapshotFailure(metadata: SnapshotMetadata, cause: Throwable) extends SnapshotResponse
+
+
+  case class DeleteSnapshotsSuccess(criteria: SnapshotSelectionCriteria) extends SnapshotResponse
   case class DeleteSnapshotsFailure(criteria: SnapshotSelectionCriteria, cause: Throwable) extends SnapshotResponse
+
+
+  sealed trait EventsResponse extends System
+  case class DeleteEventsSuccess(toSeqNr: SeqNr) extends EventsResponse
+  case class DeleteEventsFailure(toSeqNr: SeqNr, cause: Throwable) extends EventsResponse
 
 
   implicit class Ops[A](val self: PersistenceSignal[A]) extends AnyVal {

@@ -13,3 +13,10 @@ object SnapshotResponse {
     case x: DeleteSnapshotsFailure => PersistenceSignal.DeleteSnapshotsFailure(x.criteria, x.cause)
   }
 }
+
+object EventsResponse {
+  def unapply(x: Any): Option[PersistenceSignal.EventsResponse] = PartialFunction.condOpt(x) {
+    case x: DeleteMessagesSuccess => PersistenceSignal.DeleteEventsSuccess(x.toSequenceNr)
+    case x: DeleteMessagesFailure => PersistenceSignal.DeleteEventsFailure(x.toSequenceNr, x.cause)
+  }
+}

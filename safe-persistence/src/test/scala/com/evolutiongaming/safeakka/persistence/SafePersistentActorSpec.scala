@@ -130,7 +130,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
               Behavior.stop
           }
 
-          case signal: PersistenceSignal.SnapshotResponse =>
+          case signal: PersistenceSignal.System =>
             testActor.tell(signal, ActorRef.noSender)
             behavior(state)
         }

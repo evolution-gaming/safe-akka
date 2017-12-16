@@ -101,7 +101,7 @@ class CounterSpec extends WordSpec with ActorSpec {
                   behavior(counter)
               }
 
-            case signal: PersistenceSignal.SnapshotResponse =>
+            case signal: PersistenceSignal.System =>
               testActor.tell(signal, ActorRef.noSender)
               behavior(counter)
           }

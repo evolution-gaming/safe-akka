@@ -41,6 +41,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
   def rcvCommand: Receive = rcvSystem orElse {
     case asC(cmd)                    => onCmd(PersistenceSignal.Cmd(cmd), sender())
     case ap.SnapshotResponse(signal) => onCmd(signal, sender())
+    case ap.EventsResponse(signal)   => onCmd(signal, sender())
     case msg                         => onAny(msg)
   }
 
@@ -150,7 +151,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
         val next = behavior.onAny(msg)(lastSeqNr)
         nextPhase(next, () => behavior.onSignal(Signal.PostStop))
       case phase                                                        =>
-        onUnhandled(msg, s"[$lastSeqNr] receiveCommand")
+        onUnhandled(msg, s"[$lastSeqNr] onCmd")
         phase
     }
   }
