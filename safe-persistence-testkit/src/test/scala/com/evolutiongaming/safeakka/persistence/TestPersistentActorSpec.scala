@@ -81,10 +81,10 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]]) = {
         val state: State = snapshotOffer map { _.snapshot } getOrElse WithNr(0, 0)
-        Recovering(state, eventHandler)
+        Recovering(state, eventHandler, onRecoveryCompleted)
       }
 
-      def onRecoveryStopped(seqNr: SeqNr) = {}
+      def onStopped(seqNr: SeqNr) = {}
 
       def onRecoveryCompleted(state: WithNr[State]): Behavior[Cmd, Event] = behavior(state.value)
 

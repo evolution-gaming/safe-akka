@@ -27,8 +27,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
     val persistenceSetup = setup(ctx)
     val phase = Phase.ReadingSnapshot(
       persistenceSetup.onRecoveryStarted,
-      persistenceSetup.onRecoveryCompleted,
-      persistenceSetup.onRecoveryStopped)
+      persistenceSetup.onStopped)
     (persistenceSetup.persistenceId, persistenceSetup.log, VarCover[Phase](phase))
   }
 
@@ -96,8 +95,12 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
 
     inPhase {
       case phase: Phase.ReadingSnapshot =>
-        val Recovering(state, eventHandler, onStop) = phase.onStarted(Some(snapshot))
-        Phase.ReadingEvents(state, eventHandler, phase.onCompleted, onStop)
+        val recovering = phase.onRecoveryStarted(Some(snapshot))
+        Phase.ReadingEvents(
+          recovering.state,
+          recovering.eventHandler,
+          recovering.onCompleted,
+          recovering.onStopped)
     }
   }
 
@@ -110,9 +113,10 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
         phase.copy(state = state)
 
       case phase: Phase.ReadingSnapshot =>
-        val Recovering(state, eventHandler, onStop) = phase.onStarted(None)
-        val nextState = eventHandler(state, event)
-        Phase.ReadingEvents(nextState, eventHandler, phase.onCompleted, onStop)
+        val recovering = phase.onRecoveryStarted(None)
+        val eventHandler = recovering.eventHandler _
+        val state = eventHandler(recovering.state, event)
+        Phase.ReadingEvents(state, eventHandler, recovering.onCompleted, recovering.onStopped)
     }
   }
 
@@ -129,9 +133,9 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
         apply(phase.state, phase.onCompleted, onStop)
 
       case phase: Phase.ReadingSnapshot =>
-        val Recovering(state, _, _) = phase.onStarted(None)
+        val recovering = phase.onRecoveryStarted(None)
         val onStop = () => phase.onStop(lastSeqNr)
-        apply(state, phase.onCompleted, onStop)
+        apply(recovering.state, recovering.onCompleted, onStop)
     }
   }
 
@@ -194,8 +198,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
   object Phase {
 
     case class ReadingSnapshot(
-      onStarted: OnRecoveryStarted[S, SS, E],
-      onCompleted: OnRecoveryCompleted[SS, C, E],
+      onRecoveryStarted: OnRecoveryStarted[S, SS, C, E],
       onStop: Callback[SeqNr]) extends Phase
 
     case class ReadingEvents(

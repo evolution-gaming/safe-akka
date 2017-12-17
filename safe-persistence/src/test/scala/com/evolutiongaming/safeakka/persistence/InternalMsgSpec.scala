@@ -34,10 +34,10 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]]) = {
         val eventHandler: EventHandler[State, Event] = (state, eventOffer) => state + eventOffer.value
-        Recovering(0, eventHandler)
+        Recovering(0, eventHandler, onRecoveryCompleted)
       }
 
-      def onRecoveryStopped(seqNr: SeqNr) = {}
+      def onStopped(seqNr: SeqNr) = {}
 
       def onRecoveryCompleted(state: WithNr[State]) = {
 

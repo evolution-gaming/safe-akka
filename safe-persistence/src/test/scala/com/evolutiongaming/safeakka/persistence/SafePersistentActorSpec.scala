@@ -85,10 +85,10 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
         def onStop(state: WithNr[State]) = testActor ! EventsRecoveryStopped(state)
 
-        Recovering(state, eventHandler, onStop)
+        Recovering(state, eventHandler, onRecoveryCompleted, onStop)
       }
 
-      def onRecoveryStopped(seqNr: SeqNr) = testActor ! SnapshotRecoveryStopped(seqNr)
+      def onStopped(seqNr: SeqNr) = testActor ! SnapshotRecoveryStopped(seqNr)
 
       def onRecoveryCompleted(state: WithNr[State]): Behavior[Cmd, Event] = behavior(state.value)
 

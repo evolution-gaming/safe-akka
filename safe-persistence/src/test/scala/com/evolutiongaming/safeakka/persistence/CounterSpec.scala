@@ -65,10 +65,10 @@ class CounterSpec extends WordSpec with ActorSpec {
 
         def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[Counter]]) = {
           val counter = snapshotOffer map { _.snapshot } getOrElse Counter(0, 0)
-          Recovering(counter, eventHandler)
+          Recovering(counter, eventHandler, onRecoveryCompleted)
         }
 
-        def onRecoveryStopped(seqNr: SeqNr): Unit = {}
+        def onStopped(seqNr: SeqNr): Unit = {}
 
         def onRecoveryCompleted(state: WithNr[Counter]): Behavior[Cmd, Event] = behavior(state.value)
 

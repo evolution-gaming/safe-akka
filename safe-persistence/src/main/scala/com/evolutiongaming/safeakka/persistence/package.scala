@@ -10,7 +10,7 @@ package object persistence {
 
   type EventHandler[S, E] = (S, WithNr[E]) => S
 
-  type OnRecoveryStarted[-S, SS, E] = Option[SnapshotOffer[S]] => Recovering[SS, E]
+  type OnRecoveryStarted[-S, SS, C, E] = Option[SnapshotOffer[S]] => Recovering[SS, C, E]
 
   type OnRecoveryCompleted[-S, C, E] = WithNr[S] => PersistentBehavior[C, E]
 
