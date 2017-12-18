@@ -2,12 +2,16 @@ package com.evolutiongaming.safeakka.persistence
 
 import akka.persistence.SnapshotMetadata
 import com.evolutiongaming.safeakka.actor.ActorLog
+import com.evolutiongaming.safeakka.persistence
 
 
 /**
   * Implement to start [[SafePersistentActor]]
   */
 trait PersistenceSetup[S, SS, C, E] {
+
+  type Recovering = persistence.Recovering[SS, C, E]
+
 
   def persistenceId: String
 
@@ -16,7 +20,7 @@ trait PersistenceSetup[S, SS, C, E] {
   /**
     * called when recovering with events started, optional snapshot passed as argument
     */
-  def onRecoveryStarted(offer: Option[SnapshotOffer[S]]): Recovering[SS, C, E]
+  def onRecoveryStarted(offer: Option[SnapshotOffer[S]]): Recovering
 
   /**
     * called when actor stopped during reading snapshot
@@ -27,6 +31,9 @@ trait PersistenceSetup[S, SS, C, E] {
 
 trait Recovering[S, C, E] {
 
+  /**
+    * Initial state
+    */
   def state: S
 
   /**
