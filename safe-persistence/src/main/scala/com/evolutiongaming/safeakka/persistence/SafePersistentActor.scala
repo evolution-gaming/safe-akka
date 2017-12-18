@@ -141,7 +141,16 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
 
 
   protected def onCmd(signal: PersistenceSignal[C], sender: ActorRef): Unit = {
-    log.debug(s"[$lastSeqNr] onCmd $signal")
+
+    def logError() = log.error(s"[$lastSeqNr] onCmd $signal")
+
+    signal match {
+      case _: PersistenceSignal.SaveSnapshotFailure    => logError()
+      case _: PersistenceSignal.DeleteSnapshotFailure  => logError()
+      case _: PersistenceSignal.DeleteSnapshotsFailure => logError()
+      case _: PersistenceSignal.DeleteEventsFailure    => logError()
+      case _                                           => log.debug(s"[$lastSeqNr] onCmd $signal")
+    }
 
     inPhase {
       case phase: Phase.Receiving => nextPhase(phase, Signal.Msg(WithNr(signal, lastSeqNr), sender))
