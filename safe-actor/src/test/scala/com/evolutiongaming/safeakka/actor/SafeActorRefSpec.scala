@@ -1,6 +1,6 @@
 package com.evolutiongaming.safeakka.actor
 
-import akka.actor.{ActorIdentity, Identify, PoisonPill}
+import akka.actor.{ActorIdentity, Identify, PoisonPill, ReceiveTimeout}
 import akka.testkit.TestProbe
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import org.scalatest.{Matchers, WordSpec}
@@ -16,6 +16,9 @@ class SafeActorRefSpec extends WordSpec with ActorSpec with Matchers {
 
       ref ! Identify("id")
       expectMsg(ActorIdentity("id", Some(testActor)))
+
+      ref ! ReceiveTimeout
+      expectMsg(ReceiveTimeout)
 
       val probe = TestProbe()
       probe.watch(testActor)

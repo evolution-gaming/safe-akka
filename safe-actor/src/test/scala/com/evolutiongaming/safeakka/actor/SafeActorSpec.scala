@@ -1,6 +1,6 @@
 package com.evolutiongaming.safeakka.actor
 
-import akka.actor.{ActorIdentity, ActorRef, Identify, PoisonPill}
+import akka.actor.{ActorIdentity, ActorRef, Identify, PoisonPill, ReceiveTimeout}
 import akka.testkit.{TestActorRef, TestProbe}
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import org.scalatest.{Matchers, WordSpec}
@@ -22,6 +22,10 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
 
       ref ! Identify("id")
       expectMsg(ActorIdentity("id", Some(ref)))
+      lastSender shouldEqual system.deadLetters
+
+      ref ! ReceiveTimeout
+      expectMsg(Signal.RcvTimeout)
       lastSender shouldEqual system.deadLetters
 
       expectMsg(Signal.RcvTimeout)

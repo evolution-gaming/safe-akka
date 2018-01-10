@@ -69,5 +69,6 @@ object SafeActorRef {
     implicit case object Identify extends Sys[akka.actor.Identify]
     implicit case object PoisonPill extends Sys[akka.actor.PoisonPill]
     implicit case object Kill extends Sys[akka.actor.Kill]
+    implicit case object ReceiveTimeout extends Sys[akka.actor.ReceiveTimeout]
   }
 }
