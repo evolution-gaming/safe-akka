@@ -1,7 +1,6 @@
 package com.evolutiongaming.safeakka.persistence
 
-import akka.actor.ActorRef
-import com.evolutiongaming.safeakka.actor.{Unapply, WithSender}
+import com.evolutiongaming.safeakka.actor.{Sender, Unapply, WithSender}
 
 import scala.collection.immutable.Seq
 
@@ -42,7 +41,7 @@ class TestPersistentActor[S, SS, C, E](
       val sender = withSender.sender getOrElse context.system.deadLetters
       withSender.msg match {
         case asC(cmd) => onCmd(PersistenceSignal.Cmd(cmd), sender)
-        case msg      => onAny(msg)
+        case msg      => onAny(msg, sender)
       }
     }
     stash = Nil
@@ -50,7 +49,7 @@ class TestPersistentActor[S, SS, C, E](
     context.become(rcvCommand)
   }
 
-  override protected def onCmd(signal: PersistenceSignal[C], sender: ActorRef): Unit = {
+  override protected def onCmd(signal: PersistenceSignal[C], sender: Sender): Unit = {
     super.onCmd(signal, sender)
     persistCallback foreach { _.apply() }
     persistCallback = None

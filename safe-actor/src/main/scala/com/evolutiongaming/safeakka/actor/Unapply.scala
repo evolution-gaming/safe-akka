@@ -27,4 +27,10 @@ object Unapply {
     case l(x)        => Left(x)
     case r(x)        => Right(x)
   }
+
+  implicit val AnyUnapply: Unapply[Any] = Unapply[Any]
+  implicit val AnyUnapply_MistakeProtection: Unapply[Any] = Unapply[Any]
+
+  implicit val AnyRefUnapply: Unapply[AnyRef] = Unapply[AnyRef]
+  implicit val AnyRefUnapply_MistakeProtection: Unapply[AnyRef] = Unapply[AnyRef]
 }

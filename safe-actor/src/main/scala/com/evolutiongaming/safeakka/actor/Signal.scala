@@ -6,7 +6,7 @@ sealed trait Signal[+T]
 
 object Signal {
 
-  case class Msg[T](msg: T, sender: ActorRef) extends Signal[T] {
+  case class Msg[T](msg: T, sender: Sender) extends Signal[T] {
     require(sender != null, "sender is null")
   }
 

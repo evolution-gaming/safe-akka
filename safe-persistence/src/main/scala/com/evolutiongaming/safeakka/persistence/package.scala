@@ -1,6 +1,6 @@
 package com.evolutiongaming.safeakka
 
-import com.evolutiongaming.safeakka.actor.Signal
+import com.evolutiongaming.safeakka.actor.{Sender, Signal}
 
 package object persistence {
 
@@ -20,7 +20,7 @@ package object persistence {
 
   type OnSignal[-C, +E] = PSignal[C] => PersistentBehavior[C, E]
 
-  type OnAny[-C, +E] = PartialFunction[Any, (SeqNr => PersistentBehavior[C, E])]
+  type OnAny[-C, +E] = PartialFunction[Any, ((SeqNr, Sender) => PersistentBehavior[C, E])]
 
   type Callback[-T] = T => Unit
 

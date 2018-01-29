@@ -4,7 +4,8 @@ import java.util.UUID
 
 import akka.actor.ActorRef
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorLog, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorLog, Sender, Signal}
+import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
 import org.scalatest.WordSpec
 
 class InternalMsgSpec extends WordSpec with ActorSpec {
@@ -41,9 +42,9 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
       def onRecoveryCompleted(state: WithNr[State]) = {
 
-        case class Internal(sender: ActorRef)
+        case class Internal(sender: Sender)
 
-        def onEvent(state: State, event: Event, sender: ActorRef): PersistentBehavior[Cmd, Event] = {
+        def onEvent(state: State, event: Event, sender: Sender): PersistentBehavior[Cmd, Event] = {
           val stateAfter = state + event
           PersistentBehavior.persist(Record(event)) { _ =>
             sender.tell(stateAfter, ActorRef.noSender)
@@ -51,25 +52,32 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
           }
         }
 
-        def behavior(state: State): PersistentBehavior[Cmd, Event] = PersistentBehavior[Cmd, Event] {
-          case signal: Signal.System =>
-            testActor.tell(signal, ActorRef.noSender)
-            behavior(state)
+        def behavior(state: State): PersistentBehavior[Cmd, Event] = {
 
-          case Signal.Msg(signal, sender) => signal.value match {
-            case PersistenceSignal.Cmd(cmd) => cmd match {
-              case Cmd.Inc         => onEvent(state, 1, sender)
-              case Cmd.IncInternal =>
-                ctx.self.tell(Internal(sender), ActorRef.noSender)
-                behavior(state)
-            }
-
-            case signal: PersistenceSignal.System =>
+          val onSignal: OnSignal[Cmd, Event] = {
+            case signal: Signal.System =>
               testActor.tell(signal, ActorRef.noSender)
               behavior(state)
+
+            case Signal.Msg(signal, sender) => signal.value match {
+              case PersistenceSignal.Cmd(cmd) => cmd match {
+                case Cmd.Inc         => onEvent(state, 1, sender)
+                case Cmd.IncInternal =>
+                  ctx.self.tell(Internal(sender), ActorRef.noSender)
+                  behavior(state)
+              }
+
+              case signal: PersistenceSignal.System =>
+                testActor.tell(signal, ActorRef.noSender)
+                behavior(state)
+            }
           }
-        } rcvUnsafe {
-          case Internal(sender) => (seqNr: SeqNr) => onEvent(state, 2, sender)
+
+          val onAny: OnAny[Cmd, Event] = {
+            case Internal(sender) => (_: SeqNr, _: Sender) => onEvent(state, 2, sender)
+          }
+
+          Rcv(onSignal, onAny)
         }
 
         behavior(state.value)

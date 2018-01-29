@@ -16,7 +16,7 @@ trait SafeActor[T] extends RcvSystem {
 
   def receive: Receive = rcvSystem orElse {
     case asT(msg) => onSignal(Signal.Msg(msg, sender()))
-    case msg      => onAny(msg)
+    case msg      => onAny(msg, sender())
   }
 
   def onSystem(signal: Signal.System) = onSignal(signal)
@@ -43,11 +43,11 @@ trait SafeActor[T] extends RcvSystem {
     }
   }
 
-  private def onAny(msg: Any) = {
+  private def onAny(msg: Any, sender: Sender) = {
     inPhase {
       case Phase.Receiving(prev) if prev.onAny.isDefinedAt(msg) =>
         log.debug(s"onAny $msg")
-        nextPhase(prev, prev.onAny(msg))
+        nextPhase(prev, prev.onAny(msg)(sender))
       case phase                                                =>
         onUnhandled(msg, "receive")
         phase

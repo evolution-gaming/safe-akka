@@ -1,8 +1,7 @@
 package com.evolutiongaming.safeakka.persistence
 
-import akka.actor.ActorRef
 import akka.{persistence => ap}
-import com.evolutiongaming.safeakka.actor.{RcvSystem, Signal, Unapply, VarCover}
+import com.evolutiongaming.safeakka.actor._
 
 import scala.collection.immutable.Seq
 
@@ -41,7 +40,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
     case asC(cmd)                    => onCmd(PersistenceSignal.Cmd(cmd), sender())
     case ap.SnapshotResponse(signal) => onCmd(signal, sender())
     case ap.EventsResponse(signal)   => onCmd(signal, sender())
-    case msg                         => onAny(msg)
+    case msg                         => onAny(msg, sender())
   }
 
   def onSystem(signal: Signal.System): Unit = {
@@ -140,7 +139,7 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
   }
 
 
-  protected def onCmd(signal: PersistenceSignal[C], sender: ActorRef): Unit = {
+  protected def onCmd(signal: PersistenceSignal[C], sender: Sender): Unit = {
 
     def logError() = log.error(s"[$lastSeqNr] onCmd $signal")
 
@@ -157,11 +156,14 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
     }
   }
 
-  protected def onAny(msg: Any): Unit = {
+  protected def onAny(msg: Any, sender: Sender): Unit = {
     inPhase {
       case Phase.Receiving(behavior) if behavior.onAny.isDefinedAt(msg) =>
-        log.debug(s"[$lastSeqNr] onAny $msg")
-        val next = behavior.onAny(msg)(lastSeqNr)
+        
+        def senderStr = if (sender == ctx.system.deadLetters) "" else s" $sender"
+        log.debug(s"[$lastSeqNr] onAny $msg$senderStr")
+
+        val next = behavior.onAny(msg)(lastSeqNr, sender)
         nextPhase(next, () => behavior.onSignal(Signal.PostStop))
       case phase                                                        =>
         onUnhandled(msg, s"[$lastSeqNr] onCmd")

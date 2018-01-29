@@ -2,6 +2,7 @@ package com.evolutiongaming.safeakka.actor
 
 import akka.actor.{ActorRef, Props}
 import akka.testkit.TestActorRef
+import com.evolutiongaming.safeakka.actor.Behavior.Rcv
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import org.scalatest.WordSpec
 
@@ -26,9 +27,9 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
   def setup(ctx: ActorCtx, state: Int): Behavior[Msg] = {
 
     def behavior(state: Int): Behavior[Msg] = {
-      case class Internal(sender: ActorRef)
+      case class Internal(sender: Sender)
 
-      Behavior.onMsg[Msg] {
+      val onSignal: OnSignal[Msg] = {
         case Signal.Msg(Msg.Inc, sender)         =>
           val result = state + 1
           sender ! result
@@ -36,12 +37,18 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
         case Signal.Msg(Msg.InternalInc, sender) =>
           ctx.self.tell(Internal(sender), ActorRef.noSender)
           behavior(state)
-      } rcvUnsafe {
-        case Internal(sender) =>
+        case _: Signal.System                    =>
+          behavior(state)
+      }
+
+      val onAny: OnAny[Msg] = {
+        case Internal(sender) => (_: Sender) =>
           val result = state + 2
           sender ! result
           behavior(result)
       }
+
+      Rcv(onSignal, onAny)
     }
 
     behavior(state)

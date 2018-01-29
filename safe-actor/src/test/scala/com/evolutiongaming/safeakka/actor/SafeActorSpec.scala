@@ -62,7 +62,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
       def actor = SafeActor[Any] { ctx =>
         watch(ctx.self)
         (Behavior.stop, ActorLog.empty)
-      }
+      }(Unapply.AnyUnapply)
 
       val ref = TestActorRef(actor)
       expectTerminated(ref)
@@ -95,7 +95,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
     def actor = SafeActor[Any] { ctx =>
       ctx.setReceiveTimeout(100.millis)
       (behavior, ActorLog.empty)
-    }
+    }(Unapply.AnyUnapply)
 
     lazy val ref = TestActorRef(actor)
 

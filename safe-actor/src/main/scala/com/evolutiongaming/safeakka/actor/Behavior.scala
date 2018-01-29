@@ -1,8 +1,6 @@
 package com.evolutiongaming.safeakka.actor
 
-sealed trait Behavior[-T] {
-  def rcvUnsafe[TT <: T](onAny: OnAny[TT]): Behavior[TT]
-}
+sealed trait Behavior[-T]
 
 object Behavior {
 
@@ -34,14 +32,9 @@ object Behavior {
 
   case class Rcv[-T](
     onSignal: OnSignal[T],
-    onAny: OnAny[T] = PartialFunction.empty) extends Behavior[T] {
+    onAny: OnAny[T] = PartialFunction.empty) extends Behavior[T]
 
-    def rcvUnsafe[TT <: T](onAny: OnAny[TT]): Rcv[TT] = copy(onAny = onAny)
-  }
-
-  sealed trait NonRcv extends Behavior[Any] {
-    def rcvUnsafe[TT <: Any](onAny: OnAny[TT]): NonRcv = this
-  }
+  sealed trait NonRcv extends Behavior[Any]
 
   case object Stop extends NonRcv
   case object Same extends NonRcv
