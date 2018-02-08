@@ -228,34 +228,45 @@ trait SafePersistent[S, SS, C, E] extends RcvSystem {
   }
 }
 
-trait SafePersistentActor[S, SS, C, E] extends SafePersistent[S, SS, C, E] with ap.PersistentActor {
-
-  def ctx = PersistentActorCtx(this)
-
-  def persistEvents(events: Seq[E])(handler: E => Unit) = persistAll(events)(handler)
-
-  def lastSeqNr = lastSequenceNr
-
-  def receiveRecover = rcvRecover orElse {
-    case msg => onUnhandled(msg, "receiveRecover")
-  }
-
-  def receiveCommand = rcvCommand
-}
+trait SafePersistentActor[S, SS, C, E] extends SafePersistent[S, SS, C, E] with ap.PersistentActor
 
 object SafePersistentActor {
 
-  def apply[S, SS, C, E](setup: SetupPersistentActor[S, SS, C, E])(implicit
+  def apply[S, SS, C, E](
+    setup: SetupPersistentActor[S, SS, C, E],
+    journalPluginId: Option[String] = None,
+    snapshotPluginId: Option[String] = None
+  )(implicit
     asS: Unapply[S],
     asC: Unapply[C],
     asE: Unapply[E]): SafePersistentActor[S, SS, C, E] = {
 
-    new Impl(setup, asS, asC, asE)
+    new Impl(setup, journalPluginId, snapshotPluginId, asS, asC, asE)
   }
 
   private class Impl[S, SS, C, E](
     val setup: SetupPersistentActor[S, SS, C, E],
+    journalPlgnId: Option[String],
+    snapshotPlgnId: Option[String],
     val asS: Unapply[S],
     val asC: Unapply[C],
-    val asE: Unapply[E]) extends SafePersistentActor[S, SS, C, E]
+    val asE: Unapply[E]) extends SafePersistentActor[S, SS, C, E] {
+
+    override def journalPluginId: String = journalPlgnId.getOrElse(super.journalPluginId)
+
+    override def snapshotPluginId: String = snapshotPlgnId.getOrElse(super.snapshotPluginId)
+
+    def ctx = PersistentActorCtx(this)
+
+    def persistEvents(events: Seq[E])(handler: E => Unit) = persistAll(events)(handler)
+
+    def lastSeqNr = lastSequenceNr
+
+    def receiveRecover = rcvRecover orElse {
+      case msg => onUnhandled(msg, "receiveRecover")
+    }
+
+    def receiveCommand = rcvCommand
+
+  }
 }
