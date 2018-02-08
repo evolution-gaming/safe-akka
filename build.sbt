@@ -36,7 +36,7 @@ lazy val safeActor = (project
   in file("safe-actor")
   settings (name := "safe-actor")
   settings commonSettings
-  settings (libraryDependencies ++= Seq(Akka.Actor, Akka.TestKit, ScalaTest)))
+  settings (libraryDependencies ++= Seq(Akka.Actor, Akka.TestKit, ScalaTest, ExecutorTools)))
 
 lazy val safePersistence = (project
   in file("safe-persistence")

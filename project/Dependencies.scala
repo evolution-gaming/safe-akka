@@ -12,4 +12,6 @@ object Dependencies {
 
   lazy val ScalaTest = "org.scalatest" %% "scalatest" % "3.0.5" % Test
   lazy val PersistenceInmemory = "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.1.1" % Test
+  
+  lazy val ExecutorTools = "com.evolutiongaming" %% "executor-tools" % "1.0.0"
 }
