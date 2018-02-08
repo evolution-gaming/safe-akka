@@ -9,7 +9,6 @@ import org.scalatest.WordSpec
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NoStackTrace
 
-// TODO clean Behavior spec
 class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
 
   sealed trait M
