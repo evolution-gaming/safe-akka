@@ -39,9 +39,9 @@ Here is a small example:
 ```scala
 resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
-libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "0.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "1.5"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "0.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "1.5"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "0.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "1.5"
 ``` 
