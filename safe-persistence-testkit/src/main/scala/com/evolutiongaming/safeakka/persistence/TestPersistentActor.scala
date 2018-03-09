@@ -55,6 +55,13 @@ class TestPersistentActor[S, SS, C, E](
     persistCallback = None
   }
 
+
+  override protected def onAny(msg: Any, sender: Sender): Unit = {
+    super.onAny(msg, sender)
+    persistCallback foreach { _.apply() }
+    persistCallback = None
+  }
+
   def persistEvents(events: Seq[E])(handler: E => Unit): Unit = {
     val persist = () => for {event <- events} {
       seqNr += 1
