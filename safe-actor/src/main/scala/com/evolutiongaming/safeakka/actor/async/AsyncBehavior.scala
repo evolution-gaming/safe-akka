@@ -20,9 +20,9 @@ object AsyncBehavior {
 
     type Q = Queue[SignalAndHandler]
 
-    case class SignalAndHandler(signal: Signal[M], asyncHandler: AsyncHandler[S])
-    case class HandlerMsg(current: SignalAndHandler, handler: Try[Handler[S]])
-    case class NewStateMsg(current: SignalAndHandler, newState: Try[Option[S]])
+    final case class SignalAndHandler(signal: Signal[M], asyncHandler: AsyncHandler[S])
+    final case class HandlerMsg(current: SignalAndHandler, handler: Try[Handler[S]])
+    final case class NewStateMsg(current: SignalAndHandler, newState: Try[Option[S]])
 
     implicit val ec = CurrentThreadExecutionContext
 

@@ -80,4 +80,4 @@ object Recovering {
 /**
   * Typesafe clone of [[akka.persistence.SnapshotOffer]]
   */
-case class SnapshotOffer[+T](metadata: SnapshotMetadata, snapshot: T)
+final case class SnapshotOffer[+T](metadata: SnapshotMetadata, snapshot: T)

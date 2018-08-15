@@ -35,7 +35,7 @@ object SafeActorRef {
   }
 
 
-  private case class Impl[T](ref: ActorRef) extends SafeActorRef[T] {
+  private final case class Impl[T](ref: ActorRef) extends SafeActorRef[T] {
 
     def tell[TT](msg: TT, sender: Option[ActorRef])(implicit canRcv: CanRcv[TT, T]): Unit = {
       ref.tell(msg, sender getOrElse ActorRef.noSender)
@@ -48,7 +48,7 @@ object SafeActorRef {
     override def toString: String = s"SafeActorRef($ref)"
   }
 
-  private case class Compose[A, B](ref: SafeActorRef[B], f: A => B) extends SafeActorRef[A] {
+  private final case class Compose[A, B](ref: SafeActorRef[B], f: A => B) extends SafeActorRef[A] {
     def path = ref.path
     def unsafe = ref.unsafe
     def tell[TT](msg: TT, sender: Option[ActorRef])(implicit canRcv: CanRcv[TT, A]) = canRcv match {

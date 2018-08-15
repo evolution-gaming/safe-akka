@@ -22,7 +22,7 @@ object PersistentBehavior {
   }
 
 
-  case class Rcv[-C, +E](
+  final case class Rcv[-C, +E](
     onSignal: OnSignal[C, E],
     onAny: OnAny[C, E] = PartialFunction.empty) extends PersistentBehavior[C, E] {
 
@@ -39,7 +39,7 @@ object PersistentBehavior {
   }
 
 
-  case class Persist[-C, +E](
+  final case class Persist[-C, +E](
     events: Seq[Record[E]],
     onPersisted: SeqNr => PersistentBehavior[C, E]) extends PersistentBehavior[C, E] {
 
@@ -48,7 +48,7 @@ object PersistentBehavior {
 }
 
 
-case class Record[+E](event: E, onPersisted: Callback[SeqNr] = Callback.empty)
+final case class Record[+E](event: E, onPersisted: Callback[SeqNr] = Callback.empty)
 
 object Record {
 

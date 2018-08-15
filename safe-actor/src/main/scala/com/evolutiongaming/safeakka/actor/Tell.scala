@@ -13,7 +13,7 @@ object Tell {
 
   def apply[T](ref: ActorRef): Tell[T] = Impl(ref)
 
-  case class Impl[-T](ref: ActorRef) extends Tell[T] {
+  final case class Impl[-T](ref: ActorRef) extends Tell[T] {
     def apply(msg: T): Unit = ref.tell(msg, Actor.noSender)
     override def toString() = s"Tell($ref)"
   }

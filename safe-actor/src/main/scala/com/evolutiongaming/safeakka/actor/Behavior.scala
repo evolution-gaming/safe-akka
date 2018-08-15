@@ -30,7 +30,7 @@ object Behavior {
     case _                     => ()
   }
 
-  case class Rcv[-T](
+  final case class Rcv[-T](
     onSignal: OnSignal[T],
     onAny: OnAny[T] = PartialFunction.empty) extends Behavior[T]
 

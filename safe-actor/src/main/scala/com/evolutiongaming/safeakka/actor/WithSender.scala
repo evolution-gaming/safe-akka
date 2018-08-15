@@ -2,7 +2,7 @@ package com.evolutiongaming.safeakka.actor
 
 import akka.actor.{Actor, ActorRef}
 
-case class WithSender[+T](msg: T, sender: Option[Sender] = None) {
+final case class WithSender[+T](msg: T, sender: Option[Sender] = None) {
   def senderOrNot: ActorRef = sender getOrElse Actor.noSender
 }
 
