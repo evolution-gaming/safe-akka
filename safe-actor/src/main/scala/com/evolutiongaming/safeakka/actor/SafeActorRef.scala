@@ -3,41 +3,41 @@ package com.evolutiongaming.safeakka.actor
 import akka.actor.{ActorPath, ActorRef, ActorRefFactory, Props}
 
 
-trait SafeActorRef[-T] extends SafeActorRef.Tell[T] {
+trait SafeActorRef[-A] extends SafeActorRef.Tell[A] {
   def path: ActorPath
   def unsafe: ActorRef
-  def compose[TT](f: TT => T): SafeActorRef[TT] = SafeActorRef.Compose[TT, T](this, f)
+  def compose[B](ba: B => A): SafeActorRef[B] = SafeActorRef.Compose[B, A](this, ba)
 }
 
 object SafeActorRef {
 
-  def apply[T](ref: ActorRef): SafeActorRef[T] = Impl(ref)
+  def apply[A](ref: ActorRef): SafeActorRef[A] = Impl(ref)
 
-  def apply[T](
-    setup: SetupActor[T],
-    name: Option[String] = None)(implicit factory: ActorRefFactory, unapply: Unapply[T]): SafeActorRef[T] = {
+  def apply[A](
+    setup: SetupActor[A],
+    name: Option[String] = None)(implicit factory: ActorRefFactory, unapply: Unapply[A]): SafeActorRef[A] = {
 
     val props = Props(SafeActor(setup))
     val ref = name map { name => factory.actorOf(props, name) } getOrElse factory.actorOf(props)
     SafeActorRef(ref)
   }
 
-  trait Tell[-T] {
+  trait Tell[-A] {
     /**
       * @param canRcv ensures you can pass either T or one of the predefined system msgs
       */
-    def tell[TT](msg: TT, sender: Option[ActorRef] = None)(implicit canRcv: CanRcv[TT, T]): Unit
+    def tell[B](msg: B, sender: Option[ActorRef] = None)(implicit canRcv: CanRcv[B, A]): Unit
 
 
-    def tell[TT](msg: TT, sender: Sender)(implicit canRcv: CanRcv[TT, T]): Unit = tell(msg, Option(sender))
+    def tell[B](msg: B, sender: Sender)(implicit canRcv: CanRcv[B, A]): Unit = tell(msg, Option(sender))
 
-    def ![TT](msg: TT)(implicit sender: Sender = ActorRef.noSender, canRcv: CanRcv[TT, T]): Unit = tell(msg, sender)
+    def ![B](msg: B)(implicit sender: Sender = ActorRef.noSender, canRcv: CanRcv[B, A]): Unit = tell(msg, sender)
   }
 
 
-  private final case class Impl[T](ref: ActorRef) extends SafeActorRef[T] {
+  private final case class Impl[A](ref: ActorRef) extends SafeActorRef[A] {
 
-    def tell[TT](msg: TT, sender: Option[ActorRef])(implicit canRcv: CanRcv[TT, T]): Unit = {
+    def tell[B](msg: B, sender: Option[ActorRef])(implicit canRcv: CanRcv[B, A]): Unit = {
       ref.tell(msg, sender getOrElse ActorRef.noSender)
     }
 
@@ -51,21 +51,21 @@ object SafeActorRef {
   private final case class Compose[A, B](ref: SafeActorRef[B], f: A => B) extends SafeActorRef[A] {
     def path = ref.path
     def unsafe = ref.unsafe
-    def tell[TT](msg: TT, sender: Option[ActorRef])(implicit canRcv: CanRcv[TT, A]) = canRcv match {
+    def tell[C](msg: C, sender: Option[ActorRef])(implicit canRcv: CanRcv[C, A]) = canRcv match {
       case CanRcv.Identity        => ref.tell(f(msg.asInstanceOf[A]), sender)(CanRcv.identity)
-      case canRcv: CanRcv.Sys[TT] => ref.tell(msg, sender)(canRcv)
+      case canRcv: CanRcv.Sys[C] => ref.tell(msg, sender)(canRcv)
     }
   }
 
 
-  sealed trait CanRcv[-T, +TT]
+  sealed trait CanRcv[-A, +B]
 
   object CanRcv {
-    implicit def identity[T]: CanRcv[T, T] = Identity
+    implicit def identity[A]: CanRcv[A, A] = Identity
 
     private[safeakka] case object Identity extends CanRcv[Any, Nothing]
 
-    sealed trait Sys[T] extends CanRcv[T, Nothing]
+    sealed trait Sys[A] extends CanRcv[A, Nothing]
     implicit case object Identify extends Sys[akka.actor.Identify]
     implicit case object PoisonPill extends Sys[akka.actor.PoisonPill]
     implicit case object Kill extends Sys[akka.actor.Kill]

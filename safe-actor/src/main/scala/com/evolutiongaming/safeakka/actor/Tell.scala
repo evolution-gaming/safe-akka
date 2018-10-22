@@ -5,16 +5,16 @@ import akka.actor.{Actor, ActorRef}
 /**
   * Provides ability to have `tell` Function with proper toString & equals methods
   */
-trait Tell[-T] extends (T => Unit)
+trait Tell[-A] extends (A => Unit)
 
 object Tell {
 
-  def empty[T]: Tell[T] = Empty
+  def empty[A]: Tell[A] = Empty
 
-  def apply[T](ref: ActorRef): Tell[T] = Impl(ref)
+  def apply[A](ref: ActorRef): Tell[A] = Impl(ref)
 
-  final case class Impl[-T](ref: ActorRef) extends Tell[T] {
-    def apply(msg: T): Unit = ref.tell(msg, Actor.noSender)
+  final case class Impl[-A](ref: ActorRef) extends Tell[A] {
+    def apply(msg: A): Unit = ref.tell(msg, Actor.noSender)
     override def toString() = s"Tell($ref)"
   }
 

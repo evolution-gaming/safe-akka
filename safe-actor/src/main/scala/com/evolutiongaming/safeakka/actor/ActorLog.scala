@@ -21,7 +21,7 @@ object ActorLog {
 
   def apply(adapter: LoggingAdapter): ActorLog = new Impl(adapter)
 
-  def apply[T: LogSource](system: ActorSystem, source: T): ActorLog = {
+  def apply[A: LogSource](system: ActorSystem, source: A): ActorLog = {
     ActorLog(akka.event.Logging(system, source))
   }
 

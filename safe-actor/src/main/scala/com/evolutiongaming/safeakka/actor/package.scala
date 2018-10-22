@@ -4,9 +4,9 @@ import akka.actor.ActorRef
 
 package object actor {
 
-  type SetupActor[T] = ActorCtx => (Behavior[T], ActorLog)
+  type SetupActor[A] = ActorCtx => (Behavior[A], ActorLog)
 
-  type OnSignal[-T] = Signal[T] => Behavior[T]
+  type OnSignal[-A] = Signal[A] => Behavior[A]
 
   type Sender = ActorRef
 
@@ -14,5 +14,5 @@ package object actor {
     lazy val Empty: Sender = ActorRef.noSender
   }
 
-  type OnAny[-T] = PartialFunction[Any, Sender => Behavior[T]]
+  type OnAny[-A] = PartialFunction[Any, Sender => Behavior[A]]
 }

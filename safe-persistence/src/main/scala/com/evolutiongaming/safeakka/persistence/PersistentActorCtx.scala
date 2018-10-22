@@ -46,7 +46,7 @@ object PersistentActorCtx {
       implicit def dispatcher = ctx.dispatcher
       implicit def system = ctx.system
       def watch(ref: ActorRef) = ctx.watch(ref)
-      def watchWith(ref: ActorRef, msg: Any) = ctx.watchWith(ref, msg)
+      def watchWith[A](ref: ActorRef, msg: A) = ctx.watchWith(ref, msg)
       def unwatch(ref: ActorRef) = ctx.unwatch(ref)
       def parent = ctx.parent
       def refFactory = ctx.refFactory

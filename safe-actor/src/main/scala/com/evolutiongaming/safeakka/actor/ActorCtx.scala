@@ -43,7 +43,7 @@ trait ActorCtx {
   /**
     * @see [[akka.actor.ActorContext.watchWith]]
     */
-  def watchWith(ref: ActorRef, msg: Any): ActorRef
+  def watchWith[A](ref: ActorRef, msg: A): ActorRef
 
   /**
     * @see [[akka.actor.ActorContext.unwatch]]
@@ -75,7 +75,7 @@ object ActorCtx {
     def children = context.children
     def child(name: String) = context.child(name)
     def watch(ref: ActorRef) = context.watchWith(ref, Signal.Terminated(ref))
-    def watchWith(ref: ActorRef, msg: Any) = context.watchWith(ref, msg)
+    def watchWith[A](ref: ActorRef, msg: A) = context.watchWith(ref, msg)
     def unwatch(ref: ActorRef) = context.unwatch(ref)
     def parent = context.parent
     def refFactory = context

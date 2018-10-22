@@ -20,12 +20,12 @@ package object persistence {
 
   type OnSignal[-C, +E] = PSignal[C] => PersistentBehavior[C, E]
 
-  type OnAny[-C, +E] = PartialFunction[Any, ((SeqNr, Sender) => PersistentBehavior[C, E])]
+  type OnAny[-C, +E] = PartialFunction[Any, (SeqNr, Sender) => PersistentBehavior[C, E]]
 
-  type Callback[-T] = T => Unit
+  type Callback[-A] = A => Unit
 
   object Callback {
-    def empty[T]: Callback[T] = Empty
+    def empty[A]: Callback[A] = Empty
 
     private object Empty extends Callback[Any] {def apply(x: Any): Unit = () }
   }

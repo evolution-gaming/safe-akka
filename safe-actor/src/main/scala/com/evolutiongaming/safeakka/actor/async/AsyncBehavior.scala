@@ -26,15 +26,15 @@ object AsyncBehavior {
 
     implicit val ec = CurrentThreadExecutionContext
 
-    def safe[T](f: => Future[T]) = {
+    def safe[A](f: => Future[A]) = {
       try f catch { case NonFatal(failure) => Future.failed(failure) }
     }
 
-    def pipeToSelf[T](x: Future[T])(f: Try[T] => Any): Unit = {
+    def pipeToSelf[A](x: Future[A])(f: Try[A] => Any): Unit = {
       x onComplete { x => ctx.self.tell(f(x), ctx.self) }
     }
 
-    def onSuccess[T](x: Try[T], current: SignalAndHandler, state: S, queue: Q)(f: T => Behavior[M]): Behavior[M] = {
+    def onSuccess[A](x: Try[A], current: SignalAndHandler, state: S, queue: Q)(f: A => Behavior[M]): Behavior[M] = {
       x match {
         case Success(x)       => f(x)
         case Failure(failure) =>

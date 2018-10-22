@@ -2,22 +2,22 @@ package com.evolutiongaming.safeakka.actor
 
 import scala.reflect.ClassTag
 
-@scala.annotation.implicitNotFound(msg = "No Unapply available for ${T}")
-trait Unapply[T] {
-  def unapply(any: Any): Option[T]
+@scala.annotation.implicitNotFound(msg = "No Unapply available for ${A}")
+trait Unapply[A] {
+  def unapply(any: Any): Option[A]
 }
 
 object Unapply {
 
-  implicit def apply[T](implicit tag: ClassTag[T]): Unapply[T] = new Unapply[T] {
+  implicit def apply[A](implicit tag: ClassTag[A]): Unapply[A] = new Unapply[A] {
     def unapply(any: Any) = tag unapply any
   }
 
-  def apply[T](f: Any => Option[T]): Unapply[T] = new Unapply[T] {
+  def apply[A](f: Any => Option[A]): Unapply[A] = new Unapply[A] {
     def unapply(any: Any) = f(any)
   }
 
-  def pf[T](pf: PartialFunction[Any, T]): Unapply[T] = new Unapply[T] {
+  def pf[A](pf: PartialFunction[Any, A]): Unapply[A] = new Unapply[A] {
     def unapply(any: Any) = pf.lift(any)
   }
 

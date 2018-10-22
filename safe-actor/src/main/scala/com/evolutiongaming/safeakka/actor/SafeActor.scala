@@ -1,12 +1,12 @@
 package com.evolutiongaming.safeakka.actor
 
-trait SafeActor[T] extends RcvSystem {
+trait SafeActor[A] extends RcvSystem {
 
   type OnStop = () => Unit
 
-  val asT: Unapply[T]
+  val asT: Unapply[A]
 
-  def setup: SetupActor[T]
+  def setup: SetupActor[A]
 
   val (phase, log) = {
     val (behavior, log) = setup(ActorCtx(context))
@@ -21,7 +21,7 @@ trait SafeActor[T] extends RcvSystem {
 
   def onSystem(signal: Signal.System) = onSignal(signal)
 
-  private def onSignal(signal: Signal[T]): Unit = {
+  private def onSignal(signal: Signal[A]): Unit = {
 
     log.debug(s"onSignal $signal")
 
@@ -61,8 +61,8 @@ trait SafeActor[T] extends RcvSystem {
     }
   }
 
-  def nextPhase(prev: Behavior.Rcv[T], next: Behavior[T]): Phase = next match {
-    case next: Behavior.Rcv[T] => Phase.Receiving(next)
+  def nextPhase(prev: Behavior.Rcv[A], next: Behavior[A]): Phase = next match {
+    case next: Behavior.Rcv[A] => Phase.Receiving(next)
     case Behavior.Same         => Phase.Receiving(prev)
     case Behavior.Stop         =>
       context stop self
@@ -75,7 +75,7 @@ trait SafeActor[T] extends RcvSystem {
   }
 
   object Phase {
-    case class Receiving(behavior: Behavior.Rcv[T]) extends Phase
+    case class Receiving(behavior: Behavior.Rcv[A]) extends Phase
     case class Stopping(onStop: OnStop) extends Phase
     case object Final extends Phase
   }
@@ -83,7 +83,7 @@ trait SafeActor[T] extends RcvSystem {
 
 object SafeActor {
 
-  def apply[T](setup: SetupActor[T])(implicit asT: Unapply[T]): SafeActor[T] = new Impl(setup, asT)
+  def apply[A](setup: SetupActor[A])(implicit asT: Unapply[A]): SafeActor[A] = new Impl(setup, asT)
 
-  class Impl[T](val setup: SetupActor[T], val asT: Unapply[T]) extends SafeActor[T]
+  class Impl[A](val setup: SetupActor[A], val asT: Unapply[A]) extends SafeActor[A]
 }
