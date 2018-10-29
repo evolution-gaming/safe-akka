@@ -4,10 +4,10 @@ import akka.actor.ActorRef
 import akka.persistence._
 
 trait Snapshotter[-S] {
-  /**
+  /*/**
     * @see [[akka.persistence.Snapshotter.loadSnapshot]]
     */
-  def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit
+  def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit*/
 
   /**
     * @see [[akka.persistence.Snapshotter.saveSnapshot]]
@@ -35,8 +35,8 @@ object Snapshotter {
 
     def delete(seqNr: SeqNr): Unit = snapshotter.deleteSnapshot(seqNr)
 
-    def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit =
-      snapshotter.loadSnapshot(persistenceId, criteria, toSeqNr)
+    /*def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit =
+      snapshotter.loadSnapshot(persistenceId, criteria, toSeqNr)*/
 
     def delete(criteria: SnapshotSelectionCriteria): Unit = snapshotter.deleteSnapshots(criteria)
   }
@@ -45,12 +45,12 @@ object Snapshotter {
     def save(snapshot: S): Unit = ref.tell(snapshot, ActorRef.noSender)
     def delete(seqNr: SeqNr): Unit = {}
     def delete(criteria: SnapshotSelectionCriteria): Unit = {}
-    def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit = {}
+    /*def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit = {}*/
   }
 
 
   private object Empty extends Snapshotter[Any] {
-    def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit = {}
+    /*def load(persistenceId: String, criteria: SnapshotSelectionCriteria, toSeqNr: SeqNr): Unit = {}*/
     def save(snapshot: Any): Unit = {}
     def delete(sequenceNr: SeqNr): Unit = {}
     def delete(criteria: SnapshotSelectionCriteria): Unit = {}

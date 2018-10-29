@@ -6,16 +6,13 @@ sealed trait Behavior[-A] {
 
 object Behavior {
 
-  private[safeakka] val Empty: Rcv[Any] = Rcv { _: Any => same }
-
-
   def same[A]: Behavior[A] = Same
 
   def stop[A]: Behavior[A] = Stop
 
   def apply[A](onSignal: OnSignal[A]): Behavior[A] = Rcv(onSignal)
 
-  def empty[A]: Behavior[A] = Empty
+  def empty[A]: Behavior[A] = Rcv.empty
 
   def onMsg[A](onMsg: Signal.Msg[A] => Behavior[A]): Behavior[A] = Behavior[A] {
     case signal: Signal.Msg[A] => onMsg(signal)
@@ -32,6 +29,7 @@ object Behavior {
     case _                     => ()
   }
 
+
   final case class Rcv[-A](
     onSignal: OnSignal[A],
     onAny: OnAny[A] = PartialFunction.empty) extends Behavior[A] { self =>
@@ -42,6 +40,14 @@ object Behavior {
       copy(onSignal, onAny)
     }
   }
+
+  object Rcv {
+
+    private val Empty: Rcv[Any] = Rcv { _: Any => same }
+
+    def empty[A]: Rcv[A] = Empty
+  }
+
 
   sealed trait NonRcv extends Behavior[Any] { self =>
     def map[B](ba: B => Any): NonRcv = self

@@ -16,12 +16,12 @@ object TestPersistentActorRef {
 
   def apply[S, SS, C, E](
     setup: SetupPersistentActor[S, SS, C, E],
-    eventsourced: Eventsourced,
+    journaller: Journaller,
     snapshotter: Snapshotter[S],
     name: Option[String] = None)
     (implicit system: ActorSystem, asS: Unapply[S], asC: Unapply[C], asE: Unapply[E]): TestPersistentActorRef[S, C, E] = {
 
-    val props = Props(TestPersistentActor(setup, eventsourced, snapshotter))
+    val props = Props(TestPersistentActor(setup, journaller, snapshotter))
     val ref = name map { name => system.actorOf(props, name) } getOrElse system.actorOf(props)
     new Impl[S, C, E](SafeActorRef(ref))
   }

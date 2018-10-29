@@ -5,21 +5,21 @@ import java.util.UUID
 import akka.actor.ActorRef
 import akka.persistence.SnapshotMetadata
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorLog, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
 import org.scalatest.WordSpec
 
 class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
   type Event = Int
-  type State = WithNr[Int]
+  type State = (Int, SeqNr)
 
   "TestPersistentActor" should {
 
     "receive snapshot offer" in new Scope {
       val seqNr = 10L
       val metadata = SnapshotMetadata(persistenceId, sequenceNr = seqNr)
-      val state = WithNr(0, seqNr = seqNr)
+      val state = (0, seqNr)
 
       ref.recover(Some(SnapshotOffer(metadata, state)))
       ref ! Cmd.Get
@@ -29,98 +29,104 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
     "stash commands while recovering" in new Scope {
       val seqNr = 10L
       val metadata = SnapshotMetadata(persistenceId, sequenceNr = seqNr)
-      val state = WithNr(0, seqNr = seqNr)
+      val state = (0, seqNr)
 
       ref ! Cmd.Inc
       ref ! Cmd.Inc
       ref ! Cmd.Get
       ref ! Cmd.Inc
       ref.recover(Some(SnapshotOffer(metadata, state)))
-      expectMsg(WithNr(value = 1, seqNr = 11))
-      expectMsg(WithNr(value = 2, seqNr = 12))
-      expectMsg(WithNr(value = 2, seqNr = 12))
-      expectMsg(WithNr(value = 3, seqNr = 13))
+      expectMsg((1, 11))
+      expectMsg((2, 12))
+      expectMsg((2, 12))
+      expectMsg((3, 13))
     }
 
     "receive event" in new Scope {
       ref.recoverEvents(1, 2, 3)
       ref ! Cmd.Get
-      expectMsg(WithNr(value = 6, seqNr = 3))
+      expectMsg((6, 3))
     }
 
     "receive command" in new Scope {
       ref.recover()
       ref ! Cmd.Get
-      expectMsg(WithNr(value = 0, seqNr = 0))
+      expectMsg((0, 0))
 
       ref ! Cmd.Inc
-      expectMsg(WithNr(value = 1, seqNr = 1))
+      expectMsg((1, 1))
     }
 
     "stop self" in new Scope {
       ref.recover()
       ref ! Cmd.Inc
-      expectMsg(WithNr(1, 1))
+      expectMsg((1, 1))
       ref ! Cmd.Stop
       expectMsg(Stopped)
-      expectMsg(Signal.PostStop)
+      expectMsg(PersistenceSignal.Sys(Signal.PostStop))
     }
   }
 
   private trait Scope extends ActorScope {
 
-    val eventHandler: EventHandler[State, Event] = (state, offer) => WithNr(state.value + offer.value, offer.seqNr)
+    val eventHandler: EventHandler[State, Event] = { case ((state, _), event, seqNr) => (state + event, seqNr) }
 
     val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: PersistentActorCtx[State]) = new PersistenceSetup[State, State, Cmd, Event] {
+    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
       def persistenceId = Scope.this.persistenceId
 
+      def journalId = None
+
+      def snapshotId = None
+
       def log = ActorLog.empty
 
-      def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]]) = {
-        val state: State = snapshotOffer map { _.snapshot } getOrElse WithNr(0, 0)
-        Recovering(state, eventHandler, onRecoveryCompleted)
+      def onRecoveryStarted(
+        offer: Option[SnapshotOffer[(Event, SeqNr)]],
+        journal: Journaller,
+        snapshotter: Snapshotter[(Event, SeqNr)]) = new Recovering {
+
+        def state = offer.map { _.snapshot }.getOrElse((0, 0))
+
+        def eventHandler(state: State, event: Event, seqNr: SeqNr) = (state._1 + event, seqNr)
+
+        def onCompleted(state: State, seqNr: SeqNr) = behavior(state)
+
+        def onStopped(state: State, seqNr: SeqNr) = {}
+
+        private def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, seqNr) =>
+          signal match {
+            case signal: PersistenceSignal.System =>
+              testActor.tell(signal, ActorRef.noSender)
+              behavior(state)
+
+            case PersistenceSignal.Cmd(cmd, sender) => cmd match {
+              case Cmd.Inc =>
+                val event = 1
+                val stateAfter = eventHandler(state, event, seqNr + 1)
+                Behavior.persist(Record(event)) { _ =>
+                  sender.tell(stateAfter, ActorRef.noSender)
+                  behavior(stateAfter)
+                }
+
+              case Cmd.Get =>
+                sender ! state
+                behavior(state)
+
+              case Cmd.Stop =>
+                sender.tell(Stopped, ActorRef.noSender)
+                Behavior.stop
+            }
+          }
+        }
       }
 
       def onStopped(seqNr: SeqNr) = {}
-
-      def onRecoveryCompleted(state: WithNr[State]): Behavior[Cmd, Event] = behavior(state.value)
-
-      private def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] {
-
-        case signal: Signal.System =>
-          testActor.tell(signal, ActorRef.noSender)
-          behavior(state)
-
-        case Signal.Msg(WithNr(signal, seqNr), sender) => signal match {
-          case PersistenceSignal.Cmd(cmd) => cmd match {
-            case Cmd.Inc =>
-              val event = 1
-              val stateAfter = eventHandler(state, WithNr(event, seqNr + 1))
-              Behavior.persist(Record(event)) { _ =>
-                sender.tell(stateAfter, ActorRef.noSender)
-                behavior(stateAfter)
-              }
-
-            case Cmd.Get =>
-              sender ! state
-              behavior(state)
-
-            case Cmd.Stop =>
-              sender.tell(Stopped, ActorRef.noSender)
-              Behavior.stop
-          }
-
-          case signal: PersistenceSignal.System =>
-            testActor.tell(signal, ActorRef.noSender)
-            behavior(state)
-        }
-      }
     }
 
-    val ref = TestPersistentActorRef(persistenceSetup, Eventsourced.empty, Snapshotter.empty)
+    val ref = TestPersistentActorRef(persistenceSetup, Journaller.empty, Snapshotter.empty)
 
     sealed trait Cmd
     object Cmd {

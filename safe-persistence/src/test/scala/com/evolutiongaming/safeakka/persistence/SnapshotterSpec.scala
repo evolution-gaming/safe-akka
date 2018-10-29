@@ -8,10 +8,10 @@ class SnapshotterSpec extends WordSpec with ActorSpec with Matchers {
 
   "Snapshotter" should {
 
-    "load" in new ActorScope {
+    /*"load" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)
       snapshotter.load("persistenceId", SnapshotSelectionCriteria(), 0l)
-    }
+    }*/
 
     "save" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)

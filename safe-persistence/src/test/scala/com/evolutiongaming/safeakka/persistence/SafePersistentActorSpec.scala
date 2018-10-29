@@ -4,14 +4,14 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, PoisonPill}
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorLog, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
 import org.scalatest.WordSpec
 
 class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
   type Event = Int
-  type State = List[WithNr[Int]]
+  type State = List[(Int, SeqNr)]
 
   "SafePersistentActor" should {
 
@@ -24,16 +24,16 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     "stop while reading snapshot" in new Scope {
       ref ! Cmd.Append(1)
       expectMsg(RecoveryStarted(None))
-      expectMsg(WithNr(1, 0) :: Nil)
+      expectMsg((1, 0l) :: Nil)
 
       ref ! Cmd.Append(2)
-      expectMsg(WithNr(2, 1) :: WithNr(1, 0) :: Nil)
+      expectMsg((2, 1) :: (1, 0) :: Nil)
 
       ref ! Cmd.SaveSnapshot
       expectMsgType[PersistenceSignal.SaveSnapshotSuccess]
 
       ref ! PoisonPill
-      expectMsg(Signal.PostStop)
+      expectMsg(PersistenceSignal.Sys(Signal.PostStop))
 
       val ref2 = PersistentActorRef(persistenceSetup)
       ref2 ! PoisonPill
@@ -46,7 +46,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
       expectMsgType[State]
 
       ref ! PoisonPill
-      expectMsg(Signal.PostStop)
+      expectMsg(PersistenceSignal.Sys(Signal.PostStop))
 
 
       val ref2 = PersistentActorRef(persistenceSetup)
@@ -59,82 +59,87 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     "stop self" in new Scope {
       ref ! Cmd.Append(1)
       expectMsg(RecoveryStarted(None))
-      expectMsg(WithNr(1, 0) :: Nil)
+      expectMsg((1, 0) :: Nil)
       ref ! Cmd.Stop
       expectMsg(Stopped)
-      expectMsg(Signal.PostStop)
+      expectMsg(PersistenceSignal.Sys(Signal.PostStop))
     }
   }
 
   private trait Scope extends ActorScope {
 
-    val eventHandler: EventHandler[State, Event] = (state, eventOffer) => eventOffer :: state
-
     val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: PersistentActorCtx[State]) = new PersistenceSetup[State, State, Cmd, Event] {
+    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
       def persistenceId = Scope.this.persistenceId
 
+      def journalId = None
+
+      def snapshotId = None
+
       def log = ActorLog.empty
 
-      def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]]) = {
-        testActor.tell(RecoveryStarted(snapshotOffer), ActorRef.noSender)
+      def onRecoveryStarted(offer: Option[SnapshotOffer[State]], journal: Journaller, snapshotter: Snapshotter[State]) = {
 
-        val state: State = snapshotOffer map { _.snapshot } getOrElse Nil
+        testActor.tell(RecoveryStarted(offer), ActorRef.noSender)
 
-        def onStop(state: WithNr[State]) = testActor ! EventsRecoveryStopped(state)
+        new Recovering {
 
-        Recovering(state, eventHandler, onRecoveryCompleted, onStop)
+          def state = offer map { _.snapshot } getOrElse Nil
+
+          def eventHandler(state: State, event: Event, seqNr: SeqNr) = {
+            (event, seqNr) :: state
+          }
+
+          def onCompleted(state: State, seqNr: SeqNr) = behavior(state)
+
+          def onStopped(state: State, seqNr: SeqNr) = {
+            testActor ! EventsRecoveryStopped(state, seqNr)
+          }
+
+          def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, seqNr) =>
+            signal match {
+              case signal: PersistenceSignal.System =>
+                testActor.tell(signal, ActorRef.noSender)
+                behavior(state)
+
+              case PersistenceSignal.Cmd(cmd, sender) => cmd match {
+                case Cmd.Append(events) =>
+
+                  val (newState, records) = {
+                    val zero = (List.empty[Record[Event]], state, seqNr)
+                    val (records, newState, _) = events.foldLeft(zero) { case ((records, state, seqNr), event) =>
+                      val record = Record(event)
+                      val newState = eventHandler(state, event, seqNr)
+                      (record :: records, newState, seqNr + 1)
+                    }
+                    (newState, records.reverse)
+                  }
+
+                  Behavior.persist(records) { _ =>
+                    sender.tell(newState, ActorRef.noSender)
+                    behavior(newState)
+                  }
+
+                case Cmd.SaveSnapshot =>
+                  snapshotter.save(state)
+                  behavior(state)
+
+                case Cmd.Get =>
+                  sender ! state
+                  behavior(state)
+
+                case Cmd.Stop =>
+                  sender.tell(Stopped, ActorRef.noSender)
+                  Behavior.stop
+              }
+            }
+          }
+        }
       }
 
       def onStopped(seqNr: SeqNr) = testActor ! SnapshotRecoveryStopped(seqNr)
-
-      def onRecoveryCompleted(state: WithNr[State]): Behavior[Cmd, Event] = behavior(state.value)
-
-      private def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] {
-
-        case signal: Signal.System =>
-          testActor.tell(signal, ActorRef.noSender)
-          behavior(state)
-
-        case Signal.Msg(signal, sender) => signal.value match {
-          case PersistenceSignal.Cmd(cmd) => cmd match {
-            case Cmd.Append(events) =>
-
-              val (newState, records) = {
-                val zero = (List.empty[Record[Event]], state, signal.seqNr)
-                val (records, newState, _) = events.foldLeft(zero) { case ((records, state, seqNr), event) =>
-                  val record = Record(event)
-                  val newState = eventHandler(state, WithNr(event, seqNr))
-                  (record :: records, newState, seqNr + 1)
-                }
-                (newState, records.reverse)
-              }
-
-              Behavior.persist(records) { _ =>
-                sender.tell(newState, ActorRef.noSender)
-                behavior(newState)
-              }
-
-            case Cmd.SaveSnapshot =>
-              ctx.snapshotter.save(state)
-              behavior(state)
-
-            case Cmd.Get =>
-              sender ! state
-              behavior(state)
-
-            case Cmd.Stop =>
-              sender.tell(Stopped, ActorRef.noSender)
-              Behavior.stop
-          }
-
-          case signal: PersistenceSignal.System =>
-            testActor.tell(signal, ActorRef.noSender)
-            behavior(state)
-        }
-      }
     }
 
     val ref = PersistentActorRef(persistenceSetup)
@@ -152,7 +157,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
     case class RecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]])
     case class SnapshotRecoveryStopped(seqNr: SeqNr)
-    case class EventsRecoveryStopped(state: WithNr[State])
+    case class EventsRecoveryStopped(state: State, seqNr: SeqNr)
     case object Stopped
   }
 }

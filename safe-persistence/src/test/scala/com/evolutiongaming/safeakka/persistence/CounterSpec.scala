@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.ActorRef
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorLog, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
 import org.scalatest.WordSpec
 
@@ -19,7 +19,7 @@ class CounterSpec extends WordSpec with ActorSpec {
       ref ! Cmd.Get
       expectMsg(Counter(0, 0))
 
-      expectMsg(Signal.RcvTimeout)
+      expectMsg(PersistenceSignal.Sys(Signal.RcvTimeout))
 
       ref ! Cmd.Inc
       expectMsg(Event.Inc)
@@ -31,7 +31,7 @@ class CounterSpec extends WordSpec with ActorSpec {
       expectMsgType[PersistenceSignal.SaveSnapshotSuccess]
 
       ref ! Cmd.Stop
-      expectMsg(Signal.PostStop)
+      expectMsg(PersistenceSignal.Sys(Signal.PostStop))
     }
 
     "handle many commands" ignore new Scope {
@@ -50,66 +50,74 @@ class CounterSpec extends WordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    val eventHandler: EventHandler[Counter, Event] = (state, event) => {
-      state(event.value, event.seqNr)
-    }
+    val eventHandler: EventHandler[Counter, Event] = (state, event, seqNr) => state(event, seqNr)
 
-    def persistenceSetup(ctx: PersistentActorCtx[Counter]) = {
+    def persistenceSetup(ctx: ActorCtx) = {
 
       ctx.setReceiveTimeout(300.millis)
 
       new PersistenceSetup[Counter, Counter, Cmd, Event] {
+
         val persistenceId = UUID.randomUUID().toString
 
         val log = ActorLog.empty
 
-        def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[Counter]]) = new Recovering {
+        def journalId = None
 
-          def state = snapshotOffer map { _.snapshot } getOrElse Counter(0, 0)
+        def snapshotId = None
 
-          def eventHandler(state: Counter, offer: WithNr[Event]) = state(offer.value, offer.seqNr)
+        def onRecoveryStarted(
+          offer: Option[SnapshotOffer[Counter]],
+          journal: Journaller,
+          snapshotter: Snapshotter[Counter]) = new Recovering {
 
-          def onCompleted(state: WithNr[Counter]) = behavior(state.value)
+          def state = offer map { _.snapshot } getOrElse Counter(0, 0)
 
-          def onStopped(state: WithNr[Counter]) = {}
+          def eventHandler(state: Counter, event: Event, seqNr: SeqNr) = state(event, seqNr)
+
+          def onCompleted(state: Counter, seqNr: SeqNr) = {
+
+            def behavior(counter: Counter): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, _) =>
+              signal match {
+                case signal: PersistenceSignal.System =>
+                  testActor.tell(signal, ActorRef.noSender)
+                  signal match {
+                    case PersistenceSignal.Sys(Signal.RcvTimeout) => ctx.setReceiveTimeout(Duration.Inf)
+                    case _                                        =>
+                  }
+                  behavior(counter)
+
+                case PersistenceSignal.Cmd(cmd, sender) =>
+
+                  def onEvent(event: Event) = {
+
+                    val record = Record.of(event)(_ => sender.tell(event, ActorRef.noSender))
+                    Behavior.persist(record) { seqNr =>
+                      val newCounter = counter(event, seqNr)
+                      sender.tell(newCounter, ActorRef.noSender)
+                      if (cmd == Cmd.Dec) snapshotter.save(newCounter)
+                      behavior(newCounter)
+                    }
+                  }
+
+                  cmd match {
+                    case Cmd.Inc  => onEvent(Event.Inc)
+                    case Cmd.Dec  => onEvent(Event.Dec)
+                    case Cmd.Stop => Behavior.stop
+                    case Cmd.Get  =>
+                      sender.tell(counter, ActorRef.noSender)
+                      behavior(counter)
+                  }
+              }
+            }
+
+            behavior(state)
+          }
+
+          def onStopped(state: Counter, seqNr: SeqNr) = {}
         }
 
         def onStopped(seqNr: SeqNr): Unit = {}
-
-        private def behavior(counter: Counter): Behavior[Cmd, Event] = Behavior[Cmd, Event] {
-          case signal: Signal.System =>
-            testActor.tell(signal, ActorRef.noSender)
-            if (signal == Signal.RcvTimeout) ctx.setReceiveTimeout(Duration.Inf)
-            behavior(counter)
-
-          case Signal.Msg(signal, sender) => signal.value match {
-            case PersistenceSignal.Cmd(cmd) =>
-
-              def onEvent(event: Event) = {
-
-                val record = Record.of(event)(_ => sender.tell(event, ActorRef.noSender))
-                Behavior.persist(record) { seqNr =>
-                  val newCounter = counter(event, seqNr)
-                  sender.tell(newCounter, ActorRef.noSender)
-                  if (cmd == Cmd.Dec) ctx.snapshotter.save(newCounter)
-                  behavior(newCounter)
-                }
-              }
-
-              cmd match {
-                case Cmd.Inc  => onEvent(Event.Inc)
-                case Cmd.Dec  => onEvent(Event.Dec)
-                case Cmd.Stop => Behavior.stop
-                case Cmd.Get  =>
-                  sender.tell(counter, ActorRef.noSender)
-                  behavior(counter)
-              }
-
-            case signal: PersistenceSignal.System =>
-              testActor.tell(signal, ActorRef.noSender)
-              behavior(counter)
-          }
-        }
       }
     }
 

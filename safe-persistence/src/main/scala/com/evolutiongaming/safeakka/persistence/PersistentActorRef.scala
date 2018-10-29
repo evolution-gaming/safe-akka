@@ -5,12 +5,14 @@ import com.evolutiongaming.safeakka.actor.{SafeActorRef, Unapply}
 
 object PersistentActorRef {
 
-  def apply[S, SS, C, E](
+  def apply[S: Unapply, SS, C: Unapply, E: Unapply](
     setup: SetupPersistentActor[S, SS, C, E],
-    name: Option[String] = None)
-    (implicit system: ActorSystem, asS: Unapply[S], asC: Unapply[C], asE: Unapply[E]): SafeActorRef[C] = {
+    name: Option[String] = None)(implicit
+    system: ActorSystem): SafeActorRef[C] = {
 
-    val props = Props(SafePersistentActor(setup))
+    def actor() = SafePersistentActor(setup)
+
+    val props = Props(actor())
     val ref = name map { name => system.actorOf(props, name) } getOrElse system.actorOf(props)
     SafeActorRef(ref)
   }

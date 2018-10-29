@@ -12,15 +12,31 @@ trait PersistenceSetup[S, SS, C, E] { self =>
 
   type Recovering = persistence.Recovering[SS, C, E]
 
-
+  /**
+    * See [[akka.persistence.PersistenceIdentity.persistenceId]]
+    */
   def persistenceId: String
+
+  /**
+    * See [[akka.persistence.PersistenceIdentity.journalPluginId]]
+    */
+  def journalId: Option[String]
+
+  /**
+    * See [[akka.persistence.PersistenceIdentity.snapshotPluginId]]
+    */
+  def snapshotId: Option[String]
+
 
   def log: ActorLog
 
   /**
     * called when recovering with events started, optional snapshot passed as argument
     */
-  def onRecoveryStarted(offer: Option[SnapshotOffer[S]]): Recovering
+  def onRecoveryStarted(
+    offer: Option[SnapshotOffer[S]],
+    journal: Journaller,
+    snapshotter: Snapshotter[S]): Recovering // TODO return Option
 
   /**
     * called when actor stopped during reading snapshot
@@ -28,43 +44,28 @@ trait PersistenceSetup[S, SS, C, E] { self =>
   def onStopped(seqNr: SeqNr): Unit
 
 
-  final def mapC[CC](f: CC => C): PersistenceSetup[S, SS, CC, E] = new PersistenceSetup[S, SS, CC, E] {
+  final def mapRecovery[SSS, CC, EE](f: Recovering => persistence.Recovering[SSS, CC, EE]): persistence.PersistenceSetup[S, SSS, CC, EE] = {
 
-    def persistenceId = self.persistenceId
+    new PersistenceSetup[S, SSS, CC, EE] {
 
-    def log = self.log
+      def persistenceId = self.persistenceId
 
-    def onRecoveryStarted(offer: Option[SnapshotOffer[S]]) = self.onRecoveryStarted(offer).mapC(f)
+      def log = self.log
 
-    def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)
-  }
+      def journalId = self.journalId
 
+      def snapshotId = self.snapshotId
 
-  final def mapE[EE](fee: E => EE, fe: EE => E): PersistenceSetup[S, SS, C, EE] = new PersistenceSetup[S, SS, C, EE] {
+      def onRecoveryStarted(
+        offer: Option[SnapshotOffer[S]],
+        journal: Journaller,
+        snapshotter: Snapshotter[S]) = {
 
-    def persistenceId = self.persistenceId
+        f(self.onRecoveryStarted(offer, journal, snapshotter))
+      }
 
-    def log = self.log
-
-    def onRecoveryStarted(offer: Option[SnapshotOffer[S]]) = {
-      self.onRecoveryStarted(offer).mapE(fee, fe)
+      def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)
     }
-
-    def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)
-  }
-
-
-  final def map[CC, EE](fc: CC => C, fee: E => EE, fe: EE => E): PersistenceSetup[S, SS, CC, EE] = new PersistenceSetup[S, SS, CC, EE] {
-
-    def persistenceId = self.persistenceId
-
-    def log = self.log
-
-    def onRecoveryStarted(offer: Option[SnapshotOffer[S]]) = {
-      self.onRecoveryStarted(offer).map(fc, fee, fe)
-    }
-
-    def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)
   }
 }
 
@@ -79,42 +80,30 @@ trait Recovering[S, C, E] { self =>
   /**
     * called to apply event to the state
     */
-  def eventHandler(state: S, offer: WithNr[E]): S
+  def eventHandler(state: S, event: E, seqNr: SeqNr): S
 
   /**
     * called when recovering completed
     *
     * @return [[PersistentBehavior]]
     */
-  def onCompleted(state: WithNr[S]): PersistentBehavior[C, E]
+  def onCompleted(state: S, seqNr: SeqNr): PersistentBehavior[C, E]
 
   /**
     * called when actor stopped during recovery
     */
-  def onStopped(state: WithNr[S]): Unit
+  def onStopped(state: S, seqNr: SeqNr): Unit
 
 
-  final def mapC[CC](f: CC => C): Recovering[S, CC, E] = new Recovering[S, CC, E] {
-
-    def state = self.state
-
-    def eventHandler(state: S, offer: WithNr[E]) = self.eventHandler(state, offer)
-
-    def onCompleted(state: WithNr[S]) = self.onCompleted(state).mapC(f)
-
-    def onStopped(state: WithNr[S]) = onStopped(state)
-  }
-
-
-  final def mapE[EE](fee: E => EE, fe: EE => E): Recovering[S, C, EE] = new Recovering[S, C, EE] {
+  final def mapEvent[EE](fee: E => EE, fe: EE => E): Recovering[S, C, EE] = new Recovering[S, C, EE] {
 
     def state = self.state
 
-    def eventHandler(state: S, offer: WithNr[EE]) = self.eventHandler(state, offer.map(fe))
+    def eventHandler(state: S, event: EE, seqNr: SeqNr) = self.eventHandler(state, fe(event), seqNr)
 
-    def onCompleted(state: WithNr[S]) = self.onCompleted(state).mapE(fee)
+    def onCompleted(state: S, seqNr: SeqNr) = self.onCompleted(state, seqNr).mapEvent(fee)
 
-    def onStopped(state: WithNr[S]) = self.onStopped(state)
+    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
   }
 
 
@@ -122,33 +111,22 @@ trait Recovering[S, C, E] { self =>
 
     def state = self.state
 
-    def eventHandler(state: S, offer: WithNr[EE]) = self.eventHandler(state, offer.map(fe))
+    def eventHandler(state: S, offer: EE, seqNr: SeqNr) = self.eventHandler(state, fe(offer), seqNr)
 
-    def onCompleted(state: WithNr[S]) = self.onCompleted(state).map(fc, fee)
+    def onCompleted(state: S, seqNr: SeqNr) = self.onCompleted(state, seqNr).map(fc, fee)
 
-    def onStopped(state: WithNr[S]) = self.onStopped(state)
+    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
   }
-}
 
-object Recovering {
+  final def mapBehavior[CC](f: PersistentBehavior[C, E] => PersistentBehavior[CC, E]): Recovering[S, CC, E] = new Recovering[S, CC, E] {
 
-  def apply[S, C, E](
-    state: S,
-    eventHandler: EventHandler[S, E],
-    onCompleted: OnRecoveryCompleted[S, C, E],
-    onStopped: Callback[WithNr[S]] = Callback.empty): Recovering[S, C, E] = {
+    def state = self.state
 
-    val stateArg = state
-    val eventHandlerArg = eventHandler
-    val onCompletedArg = onCompleted
-    val onStoppedArg = onStopped
+    def eventHandler(state: S, event: E, seqNr: SeqNr) = self.eventHandler(state, event, seqNr)
 
-    new Recovering[S, C, E] {
-      def state: S = stateArg
-      def eventHandler(state: S, offer: WithNr[E]): S = eventHandlerArg(state, offer)
-      def onCompleted(state: WithNr[S]): PersistentBehavior[C, E] = onCompletedArg(state)
-      def onStopped(state: WithNr[S]): Unit = onStoppedArg(state)
-    }
+    def onCompleted(state: S, seqNr: SeqNr) = f(self.onCompleted(state, seqNr))
+
+    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
   }
 }
 

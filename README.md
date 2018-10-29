@@ -2,7 +2,7 @@
 
 This library provides abstraction on top of akka actors in order to add more type safety
 
-Here is a small example:
+## Actor example
 
 ```scala
   import com.evolutiongaming.safeakka.actor._
@@ -32,6 +32,8 @@ Here is a small example:
     case object Dec extends Msg
   }
 ```
+
+## PersistentActor example
 
 
 ## Setup

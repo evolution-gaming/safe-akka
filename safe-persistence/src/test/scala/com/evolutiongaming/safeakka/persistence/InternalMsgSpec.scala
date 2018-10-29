@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.ActorRef
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorLog, Sender, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender}
 import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
 import org.scalatest.WordSpec
 
@@ -27,61 +27,66 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: PersistentActorCtx[State]) = new PersistenceSetup[State, State, Cmd, Event] {
+    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
       val log = ActorLog.empty
 
       def persistenceId = Scope.this.persistenceId
 
-      def onRecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]]) = {
-        val eventHandler: EventHandler[State, Event] = (state, eventOffer) => state + eventOffer.value
-        Recovering(0, eventHandler, onRecoveryCompleted)
-      }
+      def journalId = None
 
-      def onStopped(seqNr: SeqNr) = {}
+      def snapshotId = None
 
-      def onRecoveryCompleted(state: WithNr[State]) = {
+      def onRecoveryStarted(
+        offer: Option[SnapshotOffer[State]],
+        journal: Journaller,
+        snapshotter: Snapshotter[State]) = new Recovering {
 
-        case class Internal(sender: Sender)
+        def state = 0
 
-        def onEvent(state: State, event: Event, sender: Sender): PersistentBehavior[Cmd, Event] = {
-          val stateAfter = state + event
-          PersistentBehavior.persist(Record(event)) { _ =>
-            sender.tell(stateAfter, ActorRef.noSender)
-            behavior(stateAfter)
+        def eventHandler(state: State, event: Event, seqNr: SeqNr) = state + event
+
+        def onCompleted(state: State, seqNr: SeqNr) = {
+
+          case class Internal(sender: Sender)
+
+          def onEvent(state: State, event: Event, sender: Sender): PersistentBehavior[Cmd, Event] = {
+            val stateAfter = state + event
+            PersistentBehavior.persist(Record(event)) { _ =>
+              sender.tell(stateAfter, ActorRef.noSender)
+              behavior(stateAfter)
+            }
           }
-        }
 
-        def behavior(state: State): PersistentBehavior[Cmd, Event] = {
+          def behavior(state: State): PersistentBehavior[Cmd, Event] = {
 
-          val onSignal: OnSignal[Cmd, Event] = {
-            case signal: Signal.System =>
-              testActor.tell(signal, ActorRef.noSender)
-              behavior(state)
+            val onSignal: OnSignal[Cmd, Event] = (signal, _) => signal match {
+              case signal: PersistenceSignal.System =>
+                testActor.tell(signal, ActorRef.noSender)
+                behavior(state)
 
-            case Signal.Msg(signal, sender) => signal.value match {
-              case PersistenceSignal.Cmd(cmd) => cmd match {
+              case PersistenceSignal.Cmd(cmd, sender) => cmd match {
                 case Cmd.Inc         => onEvent(state, 1, sender)
                 case Cmd.IncInternal =>
                   ctx.self.tell(Internal(sender), ActorRef.noSender)
                   behavior(state)
               }
-
-              case signal: PersistenceSignal.System =>
-                testActor.tell(signal, ActorRef.noSender)
-                behavior(state)
             }
+
+            val onAny: OnAny[Cmd, Event] = (_: SeqNr, _: Sender) => {
+              case Internal(sender) => onEvent(state, 2, sender)
+            }
+
+            Rcv(onSignal, onAny)
           }
 
-          val onAny: OnAny[Cmd, Event] = {
-            case Internal(sender) => (_: SeqNr, _: Sender) => onEvent(state, 2, sender)
-          }
-
-          Rcv(onSignal, onAny)
+          behavior(state)
         }
 
-        behavior(state.value)
+        def onStopped(state: State, seqNr: SeqNr) = {}
       }
+
+      def onStopped(seqNr: SeqNr) = {}
     }
 
     val ref = PersistentActorRef(persistenceSetup)

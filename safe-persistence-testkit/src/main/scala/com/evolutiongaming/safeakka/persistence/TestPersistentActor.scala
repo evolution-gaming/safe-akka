@@ -6,42 +6,40 @@ import scala.collection.immutable.Seq
 
 
 class TestPersistentActor[S, SS, C, E](
-  val setup: SetupPersistentActor[S, SS, C, E],
-  eventsourced: Eventsourced,
-  snapshotter: Snapshotter[S],
+  val setupPersistentActor: SetupPersistentActor[S, SS, C, E],
+  val journaller: Journaller,
+  val snapshotter: Snapshotter[S],
   val asS: Unapply[S],
   val asC: Unapply[C],
-  val asE: Unapply[E]) extends SafePersistent[S, SS, C, E] {
+  val asE: Unapply[E]) extends SafePersistentActor.PersistentLike[S, SS, C, E] {
 
   private var seqNr: SeqNr = 0L
   private var stash: List[WithSender[Any]] = Nil
   private var persistCallback: Option[() => Unit] = None
 
-  def ctx = PersistentActorCtx(context, eventsourced, snapshotter)
-
   def receive = rcvRecover orElse {
     case msg => stash = WithSender(msg, sender()) :: stash
   }
 
-  override protected def onSnapshotOffer(snapshot: SnapshotOffer[S]): Unit = {
+  override def onSnapshotOffer(snapshot: SnapshotOffer[S]): Unit = {
     seqNr = snapshot.metadata.sequenceNr
     super.onSnapshotOffer(snapshot)
   }
 
-  override protected def onEvent(event: WithNr[E]): Unit = {
-    val incremented = event.inc
-    seqNr = incremented.seqNr
-    super.onEvent(incremented)
+  override def onEvent(event: E, seqNr: SeqNr): Unit = {
+    this.seqNr = seqNr + 1
+    super.onEvent(event, this.seqNr)
   }
 
-  override protected def onRecoveryCompleted(): Unit = {
-    super.onRecoveryCompleted()
+  override def onRecoveryCompleted(seqNr: SeqNr): Unit = {
+    super.onRecoveryCompleted(seqNr)
 
     stash.foldRight(()) { (withSender, _) =>
+      val seqNr = this.seqNr
       val sender = withSender.sender getOrElse context.system.deadLetters
       withSender.msg match {
-        case asC(cmd) => onCmd(PersistenceSignal.Cmd(cmd), sender)
-        case msg      => onAny(msg, sender)
+        case asC(cmd) => onCmd(PersistenceSignal.Cmd(cmd, sender), seqNr)
+        case msg      => onAny(msg, seqNr, sender)
       }
     }
     stash = Nil
@@ -49,15 +47,15 @@ class TestPersistentActor[S, SS, C, E](
     context.become(rcvCommand)
   }
 
-  override protected def onCmd(signal: PersistenceSignal[C], sender: Sender): Unit = {
-    super.onCmd(signal, sender)
+  override protected def onCmd(signal: PersistenceSignal[C], seqNr: SeqNr): Unit = {
+    super.onCmd(signal, seqNr)
     persistCallback foreach { _.apply() }
     persistCallback = None
   }
 
 
-  override protected def onAny(msg: Any, sender: Sender): Unit = {
-    super.onAny(msg, sender)
+  override protected def onAny(msg: Any, seqNr: SeqNr, sender: Sender): Unit = {
+    super.onAny(msg, seqNr, sender)
     persistCallback foreach { _.apply() }
     persistCallback = None
   }
@@ -70,7 +68,7 @@ class TestPersistentActor[S, SS, C, E](
     persistCallback = Some(persist)
   }
 
-  def lastSeqNr = seqNr
+  def lastSeqNr() = seqNr
 
   override def toString = s"TestPersistentActor($persistenceId)"
 }
@@ -79,12 +77,12 @@ object TestPersistentActor {
 
   def apply[S, SS, C, E](
     setup: SetupPersistentActor[S, SS, C, E],
-    eventsourced: Eventsourced,
+    journaller: Journaller,
     snapshotter: Snapshotter[S])(implicit
     asS: Unapply[S],
     asC: Unapply[C],
-    asE: Unapply[E]): SafePersistent[S, SS, C, E] = {
+    asE: Unapply[E]): TestPersistentActor[S, SS, C, E] = {
 
-    new TestPersistentActor(setup, eventsourced, snapshotter, asS, asC, asE)
+    new TestPersistentActor(setup, journaller, snapshotter, asS, asC, asE)
   }
 }
