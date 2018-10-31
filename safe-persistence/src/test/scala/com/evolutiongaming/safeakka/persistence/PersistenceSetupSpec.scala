@@ -1,6 +1,7 @@
 package com.evolutiongaming.safeakka.persistence
 
 import akka.actor.ActorRef
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.ActorLog
 import org.scalatest.{FunSuite, Matchers}
 
@@ -28,7 +29,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
       def onCompleted(state: Unit, seqNr: SeqNr) = {
         def behavior(): PersistentBehavior[String, String] = PersistentBehavior[String, String] { (signal, _) =>
           signal match {
-            case PersistenceSignal.Cmd(cmd, _) => PersistentBehavior.persist(Record(cmd)) { _ => behavior() }
+            case PersistenceSignal.Cmd(cmd, _) => PersistentBehavior.persist(Nel(Record(cmd)), _ => behavior(), _ => ())
             case _                             => behavior()
           }
         }
@@ -51,7 +52,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
       .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0l)
       .asInstanceOf[PersistentBehavior.Persist[Int, Int]]
 
-    persist.events.map(_.event) shouldEqual List(0)
+    persist.records.map(_.event) shouldEqual Nel(0)
   }
 
   test("mapCommand") {
@@ -65,7 +66,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
       .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0l)
       .asInstanceOf[PersistentBehavior.Persist[Int, String]]
 
-    persist.events.map(_.event) shouldEqual List("0")
+    persist.records.map(_.event) shouldEqual Nel("0")
   }
 
   test("mapEvent") {
@@ -79,7 +80,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
       .onSignal(PersistenceSignal.Cmd("0", ActorRef.noSender), 0l)
       .asInstanceOf[PersistentBehavior.Persist[String, Int]]
 
-    persist.events.map(_.event) shouldEqual List(0)
+    persist.records.map(_.event) shouldEqual Nel(0)
   }
 
   private def compare(a: PersistenceSetup[_, _, _, _], b: PersistenceSetup[_, _, _, _]) = {

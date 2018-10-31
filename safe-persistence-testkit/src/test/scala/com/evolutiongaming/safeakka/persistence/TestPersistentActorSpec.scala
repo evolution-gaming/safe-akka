@@ -2,8 +2,9 @@ package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Status}
 import akka.persistence.SnapshotMetadata
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
@@ -106,10 +107,16 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
               case Cmd.Inc =>
                 val event = 1
                 val stateAfter = eventHandler(state, event, seqNr + 1)
-                Behavior.persist(Record(event)) { _ =>
+
+                val onPersisted = (_: SeqNr) => {
                   sender.tell(stateAfter, ActorRef.noSender)
                   behavior(stateAfter)
                 }
+
+                val onFailure = (failure: Throwable) => {
+                  sender.tell(Status.Failure(failure), ActorRef.noSender)
+                }
+                PersistentBehavior.persist(Nel(Record(event)), onPersisted, onFailure)
 
               case Cmd.Get =>
                 sender ! state

@@ -1,14 +1,12 @@
 package com.evolutiongaming.safeakka.persistence
 
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.Sender
 
-import scala.collection.immutable.Seq
+import scala.util.Try
 
 
 sealed trait PersistentBehavior[-C, +E] {
-
-  @deprecated("use mapC instead", "1.8.1")
-  final def compose[CC](f: CC => C): PersistentBehavior[CC, E] = mapCommand(f)
 
   def mapCommand[CC](f: CC => C): PersistentBehavior[CC, E]
 
@@ -23,19 +21,17 @@ object PersistentBehavior {
 
   def apply[C, E](onSignal: OnSignal[C, E]): PersistentBehavior[C, E] = Rcv(onSignal)
 
-  def persist[C, E](events: Seq[Record[E]])(onPersisted: SeqNr => PersistentBehavior[C, E]): PersistentBehavior[C, E] = {
-    Persist(events, onPersisted)
-  }
+  def persist[C, E](
+    records: Nel[Record[E]],
+    onPersisted: SeqNr => PersistentBehavior[C, E],
+    onFailure: Throwable => Unit): PersistentBehavior[C, E] = {
 
-  def persist[C, E](event: Record[E], events: Record[E]*)(onPersisted: SeqNr => PersistentBehavior[C, E]): PersistentBehavior[C, E] = {
-    Persist(event :: events.toList, onPersisted)
+    Persist(records, onPersisted, onFailure)
   }
-
 
   final case class Rcv[-C, +E](
     onSignal: OnSignal[C, E],
-    onAny: OnAny[C, E] = OnAny.empty) extends PersistentBehavior[C, E] {
-    self =>
+    onAny: OnAny[C, E] = OnAny.empty) extends PersistentBehavior[C, E] { self =>
 
     def mapCommand[CC](f: CC => C): Rcv[CC, E] = {
       val onSignal = (signal: PersistenceSignal[CC], seqNr: SeqNr) => {
@@ -78,8 +74,7 @@ object PersistentBehavior {
   }
 
 
-  case object Stop extends PersistentBehavior[Any, Nothing] {
-    self =>
+  case object Stop extends PersistentBehavior[Any, Nothing] { self =>
 
     def map[CC, EE](fc: CC => Any, fe: Nothing => EE): self.type = self
 
@@ -90,30 +85,31 @@ object PersistentBehavior {
 
 
   final case class Persist[-C, +E](
-    events: Seq[Record[E]],
-    onPersisted: SeqNr => PersistentBehavior[C, E]) extends PersistentBehavior[C, E] {
+    records: Nel[Record[E]],
+    onPersisted: SeqNr => PersistentBehavior[C, E],
+    onFailure: Throwable => Unit) extends PersistentBehavior[C, E] {
 
     def mapCommand[CC](f: CC => C): Persist[CC, E] = {
       copy(onPersisted = onPersisted.andThen(_.mapCommand(f)))
     }
 
     def mapEvent[EE](f: E => EE): Persist[C, EE] = {
-      copy(events = events.map(_.map(f)), onPersisted = onPersisted.andThen(_.mapEvent(f)))
+      copy(records = records.map(_.map(f)), onPersisted = onPersisted.andThen(_.mapEvent(f)))
     }
 
     def map[CC, EE](fc: CC => C, fe: E => EE): Persist[CC, EE] = {
-      copy(events = events.map(_.map(fe)), onPersisted = onPersisted.andThen(_.map(fc, fe)))
+      copy(records = records.map(_.map(fe)), onPersisted = onPersisted.andThen(_.map(fc, fe)))
     }
   }
 }
 
 
-final case class Record[+E](event: E, onPersisted: Callback[SeqNr] = Callback.empty) {
+final case class Record[+E](event: E, onPersisted: Callback[Try[SeqNr]] = Callback.empty) {
 
   def map[EE](f: E => EE): Record[EE] = copy(event = f(event))
 }
 
 object Record {
 
-  def of[E](event: E)(onPersisted: Callback[SeqNr]): Record[E] = Record(event, onPersisted)
+  def of[E](event: E)(onPersisted: Callback[Try[SeqNr]]): Record[E] = Record(event, onPersisted)
 }

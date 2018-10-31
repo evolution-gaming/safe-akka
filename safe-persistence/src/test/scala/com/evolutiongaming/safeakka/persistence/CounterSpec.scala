@@ -2,7 +2,8 @@ package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Status}
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
@@ -92,12 +93,18 @@ class CounterSpec extends WordSpec with ActorSpec {
                   def onEvent(event: Event) = {
 
                     val record = Record.of(event)(_ => sender.tell(event, ActorRef.noSender))
-                    Behavior.persist(record) { seqNr =>
+                    val onPersisted = (seqNr: SeqNr) => {
                       val newCounter = counter(event, seqNr)
                       sender.tell(newCounter, ActorRef.noSender)
                       if (cmd == Cmd.Dec) snapshotter.save(newCounter)
                       behavior(newCounter)
                     }
+
+                    val onFailure = (failure: Throwable) => {
+                      sender.tell(Status.Failure(failure), ActorRef.noSender)
+                    }
+
+                    Behavior.persist(Nel(record), onPersisted, onFailure)
                   }
 
                   cmd match {

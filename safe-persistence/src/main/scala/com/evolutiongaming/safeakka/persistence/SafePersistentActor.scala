@@ -2,9 +2,11 @@ package com.evolutiongaming.safeakka.persistence
 
 import akka.actor.Actor
 import akka.{persistence => ap}
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor._
 
-import scala.collection.immutable.Seq
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 
 
 trait SafePersistentActor[S, SS, C, E] extends ap.PersistentActor
@@ -33,8 +35,6 @@ object SafePersistentActor {
 
       override def snapshotPluginId: String = persistenceSetup.snapshotId getOrElse super.snapshotPluginId
 
-      def persistEvents(events: Seq[E])(handler: E => Unit) = persistAll(events)(handler)
-
       def lastSeqNr() = lastSequenceNr
 
       def receiveRecover = rcvRecover orElse {
@@ -43,14 +43,69 @@ object SafePersistentActor {
 
       def receiveCommand = rcvCommand
 
-      // TODO
-      override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = super.onRecoveryFailure(cause, event)
+      override def onPersistFailure(cause: Throwable, event: Any, seqNr: SeqNr) = {
+        try {
+          onPersistFailure(cause, lastSeqNr())
+        } catch {
+          case NonFatal(failure) => log.error(s"[$seqNr] onPersistFailure failed $failure", failure)
+        }
+        super.onPersistFailure(cause, event, seqNr)
+      }
 
-      // TODO
-      override protected def onPersistFailure(cause: Throwable, event: Any, seqNr: SeqNr): Unit = super.onPersistFailure(cause, event, seqNr)
+      override def onPersistRejected(cause: Throwable, event: Any, seqNr: SeqNr) = {
+        try {
+          onPersistRejected(cause, lastSeqNr())
+        } catch {
+          case NonFatal(failure) => log.error(s"[$seqNr] onPersistRejected failed $failure", failure)
+        }
+        super.onPersistRejected(cause, event, seqNr)
+      }
 
-      // TODO
-      override protected def onPersistRejected(cause: Throwable, event: Any, seqNr: SeqNr): Unit = super.onPersistRejected(cause, event, seqNr)
+      def onPersist(behavior: PersistentBehavior.Persist[C, E], onStop: SeqNr => Unit) = {
+        val records = behavior.records
+        val events = records.map(_.event)
+        persistAll(events.toList) { _ =>
+          onPersisted(Success(lastSeqNr()), lastSeqNr())
+        }
+        Phase.Persisting(
+          records.map(_.onPersisted),
+          onStop,
+          behavior.onPersisted,
+          behavior.onFailure)
+      }
+
+      def onPersistFailure(cause: Throwable, seqNr: SeqNr): Unit = {
+        phase map {
+          case phase: Phase.Persisting =>
+            val failure = Failure(cause)
+            phase.onEventPersisted.foreach(_.apply(failure))
+            phase.onFailure(cause)
+            Phase.Stopping(phase.onStop)
+          case phase                   => invalid(phase, seqNr)
+        }
+      }
+
+      def onPersistRejected(cause: Throwable, seqNr: SeqNr): Unit = {
+        onPersisted(Failure(cause), seqNr)
+      }
+
+      def onPersisted(seqNr: Try[SeqNr], seqNrLast: SeqNr): Unit = {
+        phase map {
+          case phase: Phase.Persisting =>
+            phase.onEventPersisted.head(seqNr)
+            phase.onEventPersisted.tail match {
+              case head :: tail => phase.copy(onEventPersisted = Nel(head, tail))
+              case Nil          => seqNr match {
+                case Success(seqNr)   => nextPhase(phase.onPersisted(seqNr), phase.onStop)
+                case Failure(failure) =>
+                  phase.onFailure(failure)
+                  context.stop(self)
+                  Phase.Stopping(phase.onStop)
+              }
+            }
+          case phase                   => invalid(phase, seqNrLast)
+        }
+      }
     }
   }
 
@@ -63,15 +118,13 @@ object SafePersistentActor {
 
     def setupPersistentActor: SetupPersistentActor[S, SS, C, E]
 
-    def persistEvents(events: Seq[E])(handler: E => Unit): Unit
-
     def lastSeqNr(): SeqNr
 
     def journaller: Journaller
 
     def snapshotter: Snapshotter[S]
 
-    val (persistenceSetup, phase) = {
+    lazy val (persistenceSetup, phase) = {
       val ctx = ActorCtx(context)
       val setup = setupPersistentActor(ctx)
       val phase = Phase.ReadingSnapshot(setup.onRecoveryStarted(_, journaller, snapshotter), setup.onStopped)
@@ -252,40 +305,23 @@ object SafePersistentActor {
       }
     }
 
-    private def nextPhase(phase: Phase.Receiving, signal: PersistenceSignal[C], seqNr: SeqNr): Phase = {
+    def nextPhase(phase: Phase.Receiving, signal: PersistenceSignal[C], seqNr: SeqNr): Phase = {
       val behavior = phase.behavior
       nextPhase(behavior.onSignal(signal, seqNr), behavior.onSignal(PersistenceSignal.Sys(Signal.PostStop), _))
     }
 
-    private def nextPhase(behavior: PersistentBehavior[C, E], onStop: SeqNr => Unit): Phase = behavior match {
-      case behavior: PersistentBehavior.Rcv[C, E] => Phase.Receiving(behavior)
-
-      case PersistentBehavior.Persist(records, onPersisted) =>
-
-        def nextPhase = this.nextPhase(onPersisted(lastSeqNr()), onStop)
-
-        if (records.isEmpty) nextPhase
-        else {
-          val events = records map { _.event }
-          val iterator = records.toIterator
-          persistEvents(events) { _ =>
-            val seqNr = lastSeqNr()
-            iterator.next.onPersisted(seqNr)
-            if (iterator.isEmpty) phase map {
-              case _: Phase.Persisting => nextPhase
-              case phase               => invalid(phase, seqNr)
-            }
-          }
-          Phase.Persisting(onStop)
-        }
-
-      case PersistentBehavior.Stop =>
+    def nextPhase(behavior: PersistentBehavior[C, E], onStop: SeqNr => Unit): Phase = behavior match {
+      case behavior: PersistentBehavior.Rcv[C, E]     => Phase.Receiving(behavior)
+      case behavior: PersistentBehavior.Persist[C, E] => onPersist(behavior, onStop)
+      case PersistentBehavior.Stop                    =>
         context stop self
         Phase.Stopping(onStop)
     }
 
+    def onPersist(behavior: PersistentBehavior.Persist[C, E], onStop: SeqNr => Unit): Phase
+
     def invalid(phase: Phase, seqNr: SeqNr): Nothing = {
-      sys.error(s"$persistenceId [${ lastSeqNr() }] invalid phase $phase")
+      sys.error(s"$persistenceId [$seqNr] invalid phase $phase")
     }
 
     sealed trait Phase extends Product {
@@ -308,7 +344,11 @@ object SafePersistentActor {
 
       case class Stopping(onStop: SeqNr => Unit) extends Phase
 
-      case class Persisting(onStop: SeqNr => Unit) extends Phase
+      case class Persisting(
+        onEventPersisted: Nel[Try[SeqNr] => Unit],
+        onStop: SeqNr => Unit,
+        onPersisted: SeqNr => PersistentBehavior[C, E],
+        onFailure: Throwable => Unit) extends Phase
 
       case object Final extends Phase
     }

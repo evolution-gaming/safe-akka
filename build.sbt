@@ -38,15 +38,23 @@ lazy val safeActor = (project
   settings (name := "safe-actor")
   settings commonSettings
   settings (libraryDependencies ++= Seq(
-  Akka.actor, Akka.testkit % Test, Akka.stream % Test, Akka.`persistence-query` % Test,
-  ScalaTest, ExecutorTools)))
+    Akka.actor, Akka.testkit % Test, Akka.stream % Test, Akka.`persistence-query` % Test,
+    scalatest,
+    `executor-tools`,
+    nel)))
 
 lazy val safePersistence = (project
   in file("safe-persistence")
   settings (name := "safe-persistence")
   settings commonSettings
   dependsOn safeActor % "test->test;compile->compile"
-  settings (libraryDependencies ++= Seq(Akka.persistence, PersistenceInmemory)))
+  settings (libraryDependencies ++= Seq(
+    Akka.persistence,
+    Akka.slf4j % Test,
+    `akka-persistence-inmemory` % Test,
+    `logback-classic` % Test,
+    Slf4j.api % Test,
+    Slf4j.`log4j-over-slf4j` % Test)))
 
 lazy val safePersistenceTestkit = (project
   in file("safe-persistence-testkit")

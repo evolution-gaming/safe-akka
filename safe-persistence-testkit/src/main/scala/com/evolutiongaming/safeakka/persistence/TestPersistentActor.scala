@@ -1,8 +1,8 @@
 package com.evolutiongaming.safeakka.persistence
 
-import com.evolutiongaming.safeakka.actor.{Sender, Unapply, WithSender}
+import com.evolutiongaming.safeakka.actor.{Unapply, WithSender}
 
-import scala.collection.immutable.Seq
+import scala.util.Success
 
 
 class TestPersistentActor[S, SS, C, E](
@@ -15,7 +15,6 @@ class TestPersistentActor[S, SS, C, E](
 
   private var seqNr: SeqNr = 0L
   private var stash: List[WithSender[Any]] = Nil
-  private var persistCallback: Option[() => Unit] = None
 
   def receive = rcvRecover orElse {
     case msg => stash = WithSender(msg, sender()) :: stash
@@ -47,25 +46,12 @@ class TestPersistentActor[S, SS, C, E](
     context.become(rcvCommand)
   }
 
-  override protected def onCmd(signal: PersistenceSignal[C], seqNr: SeqNr): Unit = {
-    super.onCmd(signal, seqNr)
-    persistCallback foreach { _.apply() }
-    persistCallback = None
-  }
-
-
-  override protected def onAny(msg: Any, seqNr: SeqNr, sender: Sender): Unit = {
-    super.onAny(msg, seqNr, sender)
-    persistCallback foreach { _.apply() }
-    persistCallback = None
-  }
-
-  def persistEvents(events: Seq[E])(handler: E => Unit): Unit = {
-    val persist = () => for {event <- events} {
+  def onPersist(behavior: PersistentBehavior.Persist[C, E], onStop: SeqNr => Unit) = {
+    behavior.records.foreach { record =>
       seqNr += 1
-      handler(event)
+      record.onPersisted(Success(seqNr))
     }
-    persistCallback = Some(persist)
+    nextPhase(behavior.onPersisted(seqNr), onStop)
   }
 
   def lastSeqNr() = seqNr

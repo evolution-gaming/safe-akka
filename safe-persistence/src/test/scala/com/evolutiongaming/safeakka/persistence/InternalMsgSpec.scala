@@ -2,7 +2,8 @@ package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Status}
+import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender}
 import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
@@ -52,10 +53,16 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
           def onEvent(state: State, event: Event, sender: Sender): PersistentBehavior[Cmd, Event] = {
             val stateAfter = state + event
-            PersistentBehavior.persist(Record(event)) { _ =>
+
+            val onPersisted = (_: SeqNr) => {
               sender.tell(stateAfter, ActorRef.noSender)
               behavior(stateAfter)
             }
+
+            val onFailure = (failure: Throwable) => {
+              sender.tell(Status.Failure(failure), ActorRef.noSender)
+            }
+            PersistentBehavior.persist(Nel(Record(event)), onPersisted, onFailure)
           }
 
           def behavior(state: State): PersistentBehavior[Cmd, Event] = {

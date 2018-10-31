@@ -36,7 +36,7 @@ trait PersistenceSetup[S, SS, C, E] { self =>
   def onRecoveryStarted(
     offer: Option[SnapshotOffer[S]],
     journal: Journaller,
-    snapshotter: Snapshotter[S]): Recovering // TODO return Option
+    snapshotter: Snapshotter[S]): Recovering
 
   /**
     * called when actor stopped during reading snapshot
