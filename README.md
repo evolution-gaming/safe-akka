@@ -35,15 +35,101 @@ This library provides abstraction on top of akka actors in order to add more typ
 
 ## PersistentActor example
 
+```scala
+def persistenceSetup(ctx: ActorCtx) = {
+
+  ctx.setReceiveTimeout(300.millis)
+
+  new PersistenceSetup[Counter, Counter, Cmd, Event] {
+
+    val persistenceId = UUID.randomUUID().toString
+
+    val log = ActorLog.empty
+
+    def journalId = None
+
+    def snapshotId = None
+
+    def onRecoveryStarted(
+      offer: Option[SnapshotOffer[Counter]],
+      journal: Journaller,
+      snapshotter: Snapshotter[Counter]) = new Recovering {
+
+      def state = offer map { _.snapshot } getOrElse Counter(0, 0)
+
+      def eventHandler(state: Counter, event: Event, seqNr: SeqNr) = state(event, seqNr)
+
+      def onCompleted(state: Counter, seqNr: SeqNr) = {
+
+        def behavior(counter: Counter): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, _) =>
+          signal match {
+            case signal: PersistenceSignal.System =>
+              testActor.tell(signal, ctx.self)
+              signal match {
+                case PersistenceSignal.Sys(Signal.RcvTimeout) => ctx.setReceiveTimeout(Duration.Inf)
+                case _                                        =>
+              }
+              behavior(counter)
+
+            case PersistenceSignal.Cmd(cmd, sender) =>
+
+              def onEvent(event: Event) = {
+
+                val record = Record.of(event)(_ => sender.tell(event, ctx.self))
+                val onPersisted = (seqNr: SeqNr) => {
+                  val newCounter = counter(event, seqNr)
+                  sender.tell(newCounter, ctx.self)
+                  if (cmd == Cmd.Dec) snapshotter.save(newCounter)
+                  behavior(newCounter)
+                }
+
+                val onFailure = (failure: Throwable) => {
+                  sender.tell(Status.Failure(failure), ctx.self)
+                }
+
+                Behavior.persist(Nel(record), onPersisted, onFailure)
+              }
+
+              cmd match {
+                case Cmd.Inc  => onEvent(Event.Inc)
+                case Cmd.Dec  => onEvent(Event.Dec)
+                case Cmd.Stop => Behavior.stop
+                case Cmd.Get  =>
+                  sender.tell(counter, ctx.self)
+                  behavior(counter)
+              }
+          }
+        }
+
+        behavior(state)
+      }
+
+      def onStopped(state: Counter, seqNr: SeqNr) = {}
+    }
+
+    def onStopped(seqNr: SeqNr): Unit = {}
+  }
+}
+
+
+val ref = PersistentActorRef(persistenceSetup)
+ref ! Cmd.Get
+ref ! Cmd.Inc
+ref ! Cmd.Dec
+ref ! Cmd.Stop
+
+```
+
+See [CounterSpec](safe-persistence/src/test/scala/com/evolutiongaming/safeakka/persistence/CounterSpec.scala)
 
 ## Setup
 
 ```scala
 resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
-libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "1.8.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "2.0.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "1.8.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "2.0.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "1.8.1"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "2.0.0"
 ``` 

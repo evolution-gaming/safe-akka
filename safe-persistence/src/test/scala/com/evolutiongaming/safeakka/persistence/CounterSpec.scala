@@ -2,7 +2,7 @@ package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
 
-import akka.actor.{ActorRef, Status}
+import akka.actor.Status
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
@@ -51,8 +51,6 @@ class CounterSpec extends WordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    val eventHandler: EventHandler[Counter, Event] = (state, event, seqNr) => state(event, seqNr)
-
     def persistenceSetup(ctx: ActorCtx) = {
 
       ctx.setReceiveTimeout(300.millis)
@@ -81,7 +79,7 @@ class CounterSpec extends WordSpec with ActorSpec {
             def behavior(counter: Counter): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, _) =>
               signal match {
                 case signal: PersistenceSignal.System =>
-                  testActor.tell(signal, ActorRef.noSender)
+                  testActor.tell(signal, ctx.self)
                   signal match {
                     case PersistenceSignal.Sys(Signal.RcvTimeout) => ctx.setReceiveTimeout(Duration.Inf)
                     case _                                        =>
@@ -92,16 +90,16 @@ class CounterSpec extends WordSpec with ActorSpec {
 
                   def onEvent(event: Event) = {
 
-                    val record = Record.of(event)(_ => sender.tell(event, ActorRef.noSender))
+                    val record = Record.of(event)(_ => sender.tell(event, ctx.self))
                     val onPersisted = (seqNr: SeqNr) => {
                       val newCounter = counter(event, seqNr)
-                      sender.tell(newCounter, ActorRef.noSender)
+                      sender.tell(newCounter, ctx.self)
                       if (cmd == Cmd.Dec) snapshotter.save(newCounter)
                       behavior(newCounter)
                     }
 
                     val onFailure = (failure: Throwable) => {
-                      sender.tell(Status.Failure(failure), ActorRef.noSender)
+                      sender.tell(Status.Failure(failure), ctx.self)
                     }
 
                     Behavior.persist(Nel(record), onPersisted, onFailure)
@@ -112,7 +110,7 @@ class CounterSpec extends WordSpec with ActorSpec {
                     case Cmd.Dec  => onEvent(Event.Dec)
                     case Cmd.Stop => Behavior.stop
                     case Cmd.Get  =>
-                      sender.tell(counter, ActorRef.noSender)
+                      sender.tell(counter, ctx.self)
                       behavior(counter)
                   }
               }
