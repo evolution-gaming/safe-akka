@@ -44,7 +44,7 @@ trait PersistenceSetup[S, SS, C, E] { self =>
   def onStopped(seqNr: SeqNr): Unit
 
 
-  final def mapRecovery[SSS, CC, EE](f: Recovering => persistence.Recovering[SSS, CC, EE]): persistence.PersistenceSetup[S, SSS, CC, EE] = {
+  final def mapRecovering[SSS, CC, EE](f: Recovering => persistence.Recovering[SSS, CC, EE]): persistence.PersistenceSetup[S, SSS, CC, EE] = {
 
     new PersistenceSetup[S, SSS, CC, EE] {
 
@@ -111,7 +111,7 @@ trait Recovering[S, C, E] { self =>
 
     def state = self.state
 
-    def eventHandler(state: S, offer: EE, seqNr: SeqNr) = self.eventHandler(state, fe(offer), seqNr)
+    def eventHandler(state: S, event: EE, seqNr: SeqNr) = self.eventHandler(state, fe(event), seqNr)
 
     def onCompleted(state: S, seqNr: SeqNr) = self.onCompleted(state, seqNr).map(fc, fee)
 

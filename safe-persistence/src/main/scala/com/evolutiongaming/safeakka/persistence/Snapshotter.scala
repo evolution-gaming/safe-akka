@@ -3,7 +3,7 @@ package com.evolutiongaming.safeakka.persistence
 import akka.actor.ActorRef
 import akka.persistence._
 
-trait Snapshotter[-S] {
+trait Snapshotter[-A] { self =>
   /*/**
     * @see [[akka.persistence.Snapshotter.loadSnapshot]]
     */
@@ -12,7 +12,7 @@ trait Snapshotter[-S] {
   /**
     * @see [[akka.persistence.Snapshotter.saveSnapshot]]
     */
-  def save(snapshot: S): Unit
+  def save(snapshot: A): Unit
 
   /**
     * @see [[akka.persistence.Snapshotter.deleteSnapshot]]
@@ -23,6 +23,16 @@ trait Snapshotter[-S] {
     * @see [[akka.persistence.Snapshotter.deleteSnapshots]]
     */
   def delete(criteria: SnapshotSelectionCriteria): Unit
+
+
+  final def map[B](f: B => A): Snapshotter[B] = new Snapshotter[B] {
+
+    def save(snapshot: B) = self.save(f(snapshot))
+
+    def delete(seqNr: SeqNr) = self.delete(seqNr)
+    
+    def delete(criteria: SnapshotSelectionCriteria) = self.delete(criteria)
+  }
 }
 
 object Snapshotter {

@@ -24,7 +24,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
 
       def state = {}
 
-      def eventHandler(state: Unit, offer: String, seqNr: SeqNr) = {}
+      def eventHandler(state: Unit, event: String, seqNr: SeqNr) = {}
 
       def onCompleted(state: Unit, seqNr: SeqNr) = {
         def behavior(): PersistentBehavior[String, String] = PersistentBehavior[String, String] { (signal, _) =>
@@ -42,7 +42,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
   }
 
   test("map") {
-    val setup2 = setup.mapRecovery(_.map[Int, Int](_.toString, _.toInt, _.toString))
+    val setup2 = setup.mapRecovering(_.map[Int, Int](_.toString, _.toInt, _.toString))
     compare(setup2, setup)
 
     val persist = setup2
@@ -56,7 +56,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
   }
 
   test("mapCommand") {
-    val setup2 = setup.mapRecovery(_.mapBehavior(_.mapCommand[Int](_.toString)))
+    val setup2 = setup.mapRecovering(_.mapBehavior(_.mapCommand[Int](_.toString)))
     compare(setup2, setup)
 
     val persist = setup2
@@ -70,7 +70,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
   }
 
   test("mapEvent") {
-    val setup2 = setup.mapRecovery(_.mapEvent[Int](_.toInt, _.toString))
+    val setup2 = setup.mapRecovering(_.mapEvent[Int](_.toInt, _.toString))
     compare(setup2, setup)
 
     val persist = setup2

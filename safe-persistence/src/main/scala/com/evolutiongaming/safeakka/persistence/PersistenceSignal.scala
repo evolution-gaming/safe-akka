@@ -14,8 +14,7 @@ object PersistenceSignal {
     def map[B](ab: A => B): Cmd[B] = copy(cmd = ab(cmd))
   }
 
-  sealed trait System extends PersistenceSignal[Nothing] {
-    self =>
+  sealed trait System extends PersistenceSignal[Nothing] { self =>
     final def map[B](ab: Nothing => B): System = self
   }
 

@@ -117,7 +117,10 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
       def log = ActorLog.empty
 
-      def onRecoveryStarted(offer: Option[SnapshotOffer[State]], journal: Journaller, snapshotter: Snapshotter[State]) = {
+      def onRecoveryStarted(
+        offer: Option[SnapshotOffer[State]],
+        journal: Journaller,
+        snapshotter: Snapshotter[State]) = {
 
         testActor.tell(RecoveryStarted(offer), ActorRef.noSender)
 
@@ -208,7 +211,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
       case object Stop extends Cmd
     }
 
-    case class RecoveryStarted(snapshotOffer: Option[SnapshotOffer[State]])
+    case class RecoveryStarted(offer: Option[SnapshotOffer[State]])
     case class SnapshotRecoveryStopped(seqNr: SeqNr)
     case class EventsRecoveryStopped(state: State, seqNr: SeqNr)
     case object Stopped
