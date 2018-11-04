@@ -86,7 +86,7 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[(Event, SeqNr)]],
-        journal: Journaller,
+        journaller: Journaller,
         snapshotter: Snapshotter[(Event, SeqNr)]) = new Recovering {
 
         def state = offer.map { _.snapshot }.getOrElse((0, 0))

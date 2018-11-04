@@ -35,7 +35,7 @@ trait PersistenceSetup[S, SS, C, E] { self =>
     */
   def onRecoveryStarted(
     offer: Option[SnapshotOffer[S]],
-    journal: Journaller,
+    journaller: Journaller,
     snapshotter: Snapshotter[S]): Recovering
 
   /**
@@ -58,10 +58,10 @@ trait PersistenceSetup[S, SS, C, E] { self =>
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[S]],
-        journal: Journaller,
+        journaller: Journaller,
         snapshotter: Snapshotter[S]) = {
 
-        f(self.onRecoveryStarted(offer, journal, snapshotter))
+        f(self.onRecoveryStarted(offer, journaller, snapshotter))
       }
 
       def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)

@@ -119,7 +119,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
-        journal: Journaller,
+        journaller: Journaller,
         snapshotter: Snapshotter[State]) = {
 
         testActor.tell(RecoveryStarted(offer), ActorRef.noSender)
@@ -236,7 +236,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
-        journal: Journaller,
+        journaller: Journaller,
         snapshotter: Snapshotter[State]) = new Recovering {
 
         def state = ()

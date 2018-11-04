@@ -61,14 +61,11 @@ class TestPersistentActor[S, SS, C, E](
 
 object TestPersistentActor {
 
-  def apply[S, SS, C, E](
+  def apply[S: Unapply, SS, C: Unapply, E: Unapply](
     setup: SetupPersistentActor[S, SS, C, E],
-    journaller: Journaller,
-    snapshotter: Snapshotter[S])(implicit
-    asS: Unapply[S],
-    asC: Unapply[C],
-    asE: Unapply[E]): TestPersistentActor[S, SS, C, E] = {
+    journaller: Journaller = Journaller.empty,
+    snapshotter: Snapshotter[S] = Snapshotter.empty): TestPersistentActor[S, SS, C, E] = {
 
-    new TestPersistentActor(setup, journaller, snapshotter, asS, asC, asE)
+    new TestPersistentActor(setup, journaller, snapshotter, Unapply.of[S], Unapply.of[C], Unapply.of[E])
   }
 }

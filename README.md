@@ -52,7 +52,7 @@ def persistenceSetup(ctx: ActorCtx) = {
 
     def onRecoveryStarted(
       offer: Option[SnapshotOffer[Counter]],
-      journal: Journaller,
+      journaller: Journaller,
       snapshotter: Snapshotter[Counter]) = new Recovering {
 
       def state = offer map { _.snapshot } getOrElse Counter(0, 0)

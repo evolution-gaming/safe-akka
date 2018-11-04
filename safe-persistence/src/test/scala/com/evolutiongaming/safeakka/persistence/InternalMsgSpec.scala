@@ -40,7 +40,7 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
-        journal: Journaller,
+        journaller: Journaller,
         snapshotter: Snapshotter[State]) = new Recovering {
 
         def state = 0

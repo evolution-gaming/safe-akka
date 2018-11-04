@@ -21,6 +21,8 @@ object Unapply {
     def unapply(any: Any) = pf.lift(any)
   }
 
+  def of[A](implicit unapply: Unapply[A]): Unapply[A] = unapply
+
   implicit def either[L, R](implicit l: Unapply[L], r: Unapply[R]): Unapply[Either[L, R]] = pf[Either[L, R]] {
     case Left(l(x))  => Left(x)
     case Right(r(x)) => Right(x)

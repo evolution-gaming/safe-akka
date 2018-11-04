@@ -19,7 +19,7 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
 
     def onRecoveryStarted(
       offer: Option[SnapshotOffer[Unit]],
-      journal: Journaller,
+      journaller: Journaller,
       snapshotter: Snapshotter[Unit]) = new Recovering {
 
       def state = {}
