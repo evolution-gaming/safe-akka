@@ -16,8 +16,8 @@ object TestPersistentActorRef {
 
   def apply[S, SS, C, E](
     setup: SetupPersistentActor[S, SS, C, E],
-    journaller: Journaller,
-    snapshotter: Snapshotter[S],
+    journaller: Journaller = Journaller.empty,
+    snapshotter: Snapshotter[S] = Snapshotter.empty,
     name: Option[String] = None)
     (implicit system: ActorSystem, asS: Unapply[S], asC: Unapply[C], asE: Unapply[E]): TestPersistentActorRef[S, C, E] = {
 
