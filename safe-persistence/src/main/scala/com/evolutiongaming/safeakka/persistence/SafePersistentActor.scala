@@ -145,7 +145,7 @@ object SafePersistentActor {
       case asC(cmd)                    => onCmd(PersistenceSignal.Cmd(cmd, sender()), lastSeqNr())
       case ap.SnapshotResponse(signal) => onCmd(signal, lastSeqNr())
       case ap.EventsResponse(signal)   => onCmd(signal, lastSeqNr())
-      case msg                         => onAny(msg, lastSeqNr(), sender())
+      case msg                         => onAny(msg, lastSeqNr(), Sender(sender()))
     }
 
     override def postStop(): Unit = {

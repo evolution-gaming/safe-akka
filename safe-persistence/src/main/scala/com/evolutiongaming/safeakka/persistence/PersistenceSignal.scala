@@ -1,5 +1,6 @@
 package com.evolutiongaming.safeakka.persistence
 
+import akka.actor.ActorRef
 import akka.persistence.{SnapshotMetadata, SnapshotSelectionCriteria}
 import com.evolutiongaming.safeakka.actor.{Sender, Signal}
 
@@ -12,6 +13,10 @@ object PersistenceSignal {
 
   final case class Cmd[+A](cmd: A, sender: Sender) extends PersistenceSignal[A] {
     def map[B](ab: A => B): Cmd[B] = copy(cmd = ab(cmd))
+  }
+
+  object Cmd {
+    def apply[A](msg: A, sender: ActorRef): Cmd[A] = Cmd(msg, sender)
   }
 
   sealed trait System extends PersistenceSignal[Nothing] { self =>

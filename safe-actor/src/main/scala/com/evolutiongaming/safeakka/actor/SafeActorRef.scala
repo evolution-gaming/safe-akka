@@ -29,9 +29,9 @@ object SafeActorRef {
     def tell[B](msg: B, sender: Option[ActorRef] = None)(implicit canRcv: CanRcv[B, A]): Unit
 
 
-    def tell[B](msg: B, sender: Sender)(implicit canRcv: CanRcv[B, A]): Unit = tell(msg, Option(sender))
+    def tell[B](msg: B, sender: ActorRef)(implicit canRcv: CanRcv[B, A]): Unit = tell(msg, Option(sender))
 
-    def ![B](msg: B)(implicit sender: Sender = ActorRef.noSender, canRcv: CanRcv[B, A]): Unit = tell(msg, sender)
+    def ![B](msg: B)(implicit sender: ActorRef = ActorRef.noSender, canRcv: CanRcv[B, A]): Unit = tell(msg, sender)
   }
 
 

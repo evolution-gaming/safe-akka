@@ -6,7 +6,7 @@ import akka.actor.{ActorRef, Status}
 import akka.persistence.SnapshotMetadata
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, MarshalReply, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
 import org.scalatest.WordSpec
 
@@ -73,6 +73,8 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
     val eventHandler: EventHandler[State, Event] = { case ((state, _), event, seqNr) => (state + event, seqNr) }
 
     val persistenceId = UUID.randomUUID().toString
+
+    private implicit val dummyMarshaller: MarshalReply[Any] = _ => Array.empty
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 

@@ -12,6 +12,10 @@ object Signal {
     def map[B](ab: A => B): Msg[B] = copy(msg = ab(msg))
   }
 
+  object Msg {
+    def apply[A](msg: A, sender: ActorRef): Msg[A] = Msg(msg, sender)
+  }
+
   sealed trait System extends Signal[Nothing] { self =>
     def map[B](f: Nothing => B): System = self
   }

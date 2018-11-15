@@ -24,7 +24,7 @@ object SafeActor {
 
     def receive: Receive = RcvSystem(onSignal) orElse {
       case unapply(msg) => onSignal(Signal.Msg(msg, sender()))
-      case msg          => onAny(msg, sender())
+      case msg          => onAny(msg, Sender(sender()))
     }
 
     override def postStop(): Unit = {

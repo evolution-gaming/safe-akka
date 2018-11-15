@@ -327,6 +327,8 @@ class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
     lazy val successful = Future.successful(())
     lazy val ref = newRef()
 
+    private implicit val dummyMarshaller: MarshalReply[Any] = _ => Array.empty
+
     def failed(idx: Int) = Future.failed(TestException(idx))
 
     def flush(): Unit = {

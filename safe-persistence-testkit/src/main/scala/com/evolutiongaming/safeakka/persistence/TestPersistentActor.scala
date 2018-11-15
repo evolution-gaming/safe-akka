@@ -1,6 +1,6 @@
 package com.evolutiongaming.safeakka.persistence
 
-import com.evolutiongaming.safeakka.actor.{Unapply, WithSender}
+import com.evolutiongaming.safeakka.actor.{Sender, Unapply, WithSender}
 
 import scala.util.Success
 
@@ -35,7 +35,7 @@ class TestPersistentActor[S, SS, C, E](
 
     stash.foldRight(()) { (withSender, _) =>
       val seqNr = this.seqNr
-      val sender = withSender.sender getOrElse context.system.deadLetters
+      val sender = withSender.sender getOrElse Sender(context.system.deadLetters)
       withSender.msg match {
         case asC(cmd) => onCmd(PersistenceSignal.Cmd(cmd, sender), seqNr)
         case msg      => onAny(msg, seqNr, sender)

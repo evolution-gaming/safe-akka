@@ -1,9 +1,9 @@
 package com.evolutiongaming.safeakka.actor
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.ActorRef
 
 final case class WithSender[+A](msg: A, sender: Option[Sender] = None) {
-  def senderOrNot: ActorRef = sender getOrElse Actor.noSender
+  def senderOrNot: Sender = sender getOrElse Sender.Empty
 
   def map[B](ab: A => B): WithSender[B] = copy(msg = ab(msg))
 }
@@ -11,7 +11,11 @@ final case class WithSender[+A](msg: A, sender: Option[Sender] = None) {
 object WithSender {
 
   def apply[A](msg: A, sender: Sender): WithSender[A] = {
-    WithSender(msg, Option(sender))
+    WithSender(msg, Some(sender))
+  }
+
+  def apply[A](msg: A, sender: ActorRef): WithSender[A] = {
+    WithSender(msg, Some(Sender(sender)))
   }
 
   def apply[A](signal: Signal.Msg[A]): WithSender[A] = {
