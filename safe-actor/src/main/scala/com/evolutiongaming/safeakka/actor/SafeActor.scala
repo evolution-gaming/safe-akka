@@ -69,7 +69,7 @@ object SafeActor {
 
         case phase =>
           log.warn {
-            if (sender == context.system.deadLetters) {
+            if (sender == Sender(context.system.deadLetters)) {
               s"receive unhandled message: ${ msg.getClass.getName }"
             } else {
               s"receive unhandled message: ${ msg.getClass.getName }, sender: $sender"

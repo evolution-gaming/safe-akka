@@ -16,9 +16,14 @@ trait Sender {
   def forward[A](message: A)
     (implicit context: ActorContext, marshalReply: Sender.MarshalReply[A]): Unit = tell(message, context.sender())
 
-  def ==(that: ActorRef): Boolean = ref equals that
+  override def hashCode: Int = ref.hashCode()
 
-  override def toString: String = ref.toString()
+  override def equals(that: Any): Boolean = that match {
+    case s: Sender => ref equals s.ref
+    case _         => ref equals that
+  }
+
+  override def toString: String = s"Sender(${ref.toString()})"
 }
 
 object Sender {

@@ -29,7 +29,7 @@ object SafeActorRef {
     def tell[B](msg: B, sender: Option[ActorRef] = None)(implicit canRcv: CanRcv[B, A]): Unit
 
 
-    def tell[B](msg: B, sender: ActorRef)(implicit canRcv: CanRcv[B, A]): Unit = tell(msg, Option(sender))
+    def tell[B](msg: B, sender: ActorRef)(implicit canRcv: CanRcv[B, A]): Unit = tell(msg, Some(sender))
 
     def ![B](msg: B)(implicit sender: ActorRef = ActorRef.noSender, canRcv: CanRcv[B, A]): Unit = tell(msg, sender)
   }
@@ -52,7 +52,7 @@ object SafeActorRef {
     def path = ref.path
     def unsafe = ref.unsafe
     def tell[C](msg: C, sender: Option[ActorRef])(implicit canRcv: CanRcv[C, A]) = canRcv match {
-      case CanRcv.Identity        => ref.tell(f(msg.asInstanceOf[A]), sender)(CanRcv.identity)
+      case CanRcv.Identity       => ref.tell(f(msg.asInstanceOf[A]), sender)(CanRcv.identity)
       case canRcv: CanRcv.Sys[C] => ref.tell(msg, sender)(canRcv)
     }
   }

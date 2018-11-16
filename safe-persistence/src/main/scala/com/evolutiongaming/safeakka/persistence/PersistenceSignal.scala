@@ -16,7 +16,7 @@ object PersistenceSignal {
   }
 
   object Cmd {
-    def apply[A](msg: A, sender: ActorRef): Cmd[A] = Cmd(msg, sender)
+    def apply[A](msg: A, sender: ActorRef): Cmd[A] = Cmd(msg, Sender(sender))
   }
 
   sealed trait System extends PersistenceSignal[Nothing] { self =>

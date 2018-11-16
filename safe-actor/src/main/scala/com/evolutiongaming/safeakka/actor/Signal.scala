@@ -13,7 +13,7 @@ object Signal {
   }
 
   object Msg {
-    def apply[A](msg: A, sender: ActorRef): Msg[A] = Msg(msg, sender)
+    def apply[A](msg: A, sender: ActorRef): Msg[A] = Msg(msg, Sender(sender))
   }
 
   sealed trait System extends Signal[Nothing] { self =>
