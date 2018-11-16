@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.{ActorRef, Status}
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, MarshalReply, Sender}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender}
 import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
 import org.scalatest.WordSpec
 
@@ -28,7 +28,7 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    private implicit val dummyMarshaller: MarshalReply[Any] = _ => Array.empty
+    private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 

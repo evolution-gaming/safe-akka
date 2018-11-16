@@ -104,7 +104,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
 
   private trait WatchScope extends ActorScope {
 
-    private implicit val dummyMarshaller: MarshalReply[Any] = _ => Array.empty
+    private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
 
     val setup: SetupActor[Cmd] = ctx => {
       val behavior = Behavior.stateless[Cmd] {

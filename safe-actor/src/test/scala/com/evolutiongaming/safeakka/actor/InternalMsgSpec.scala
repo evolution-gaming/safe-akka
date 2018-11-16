@@ -24,7 +24,7 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
     val ref = SafeActorRef[Msg](TestActorRef(props))
   }
 
-  private implicit val dummyMarshaller: MarshalReply[Any] = _ => Array.empty
+  private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
 
   def setup(ctx: ActorCtx, state: Int): Behavior[Msg] = {
 

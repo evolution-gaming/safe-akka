@@ -7,6 +7,4 @@ package object actor {
   type OnSignal[-A] = Signal[A] => Behavior[A]
 
   type OnAny[-A] = PartialFunction[Any, Sender => Behavior[A]]
-
-  type MarshalReply[O] = O => Array[Byte]
 }
