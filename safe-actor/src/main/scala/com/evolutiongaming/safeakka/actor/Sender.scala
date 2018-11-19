@@ -4,8 +4,6 @@ import akka.actor.{Actor, ActorContext, ActorPath, ActorRef}
 
 trait Sender {
 
-  def path: ActorPath
-
   def ![A](msg: A)(implicit sender: ActorRef = Actor.noSender, marshalReply: Sender.MarshalReply[A]): Unit
 
   def tell[A](msg: A, sender: ActorRef)(implicit marshalReply: Sender.MarshalReply[A]): Unit =
@@ -13,16 +11,20 @@ trait Sender {
 
   def forward[A](message: A)(implicit context: ActorContext, marshalReply: Sender.MarshalReply[A]): Unit =
     tell(message, context.sender())
+
+  def path: ActorPath
+
+  def ==(that: ActorRef): Boolean
 }
 
 object Sender {
 
   private case class SenderImpl(protected val ref: ActorRef) extends Sender {
-
-    def path: ActorPath = ref.path
-
+    
     override def ![A](msg: A)(implicit sender: ActorRef = Actor.noSender, marshalReply: Sender.MarshalReply[A]): Unit =
       ref.!(marshalReply marshal msg)(sender)
+
+    def path: ActorPath = ref.path
 
     def ==(that: ActorRef): Boolean = ref equals that
   }
