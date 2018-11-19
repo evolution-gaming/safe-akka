@@ -107,7 +107,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
+    private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
@@ -225,7 +225,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     type State = Unit
     case class Cmd(events: Nel[Event])
 
-    private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
+    private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 

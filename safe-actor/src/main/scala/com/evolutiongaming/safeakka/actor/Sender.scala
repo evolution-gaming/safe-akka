@@ -4,37 +4,36 @@ import akka.actor.{Actor, ActorContext, ActorPath, ActorRef}
 
 trait Sender {
 
-  protected def ref: ActorRef
+  def path: ActorPath
 
-  def path: ActorPath = ref.path
+  def ![A](msg: A)(implicit sender: ActorRef = Actor.noSender, marshalReply: Sender.MarshalReply[A]): Unit
 
-  def ![A](msg: A)(implicit sender: ActorRef = Actor.noSender, marshalReply: Sender.MarshalReply[A]): Unit =
-    ref.!(marshalReply marshal msg)(sender)
+  def tell[A](msg: A, sender: ActorRef)(implicit marshalReply: Sender.MarshalReply[A]): Unit =
+    this.!(msg)(sender, marshalReply)
 
-  def tell[A](msg: A, sender: ActorRef)(implicit marshalReply: Sender.MarshalReply[A]): Unit = this.!(msg)(sender, marshalReply)
-
-  def forward[A](message: A)
-    (implicit context: ActorContext, marshalReply: Sender.MarshalReply[A]): Unit = tell(message, context.sender())
-
-  override def hashCode: Int = ref.hashCode()
-
-  override def equals(that: Any): Boolean = that match {
-    case s: Sender => ref equals s.ref
-    case _         => ref equals that
-  }
-
-  override def toString: String = s"Sender(${ref.toString()})"
+  def forward[A](message: A)(implicit context: ActorContext, marshalReply: Sender.MarshalReply[A]): Unit =
+    tell(message, context.sender())
 }
 
 object Sender {
+
+  private case class SenderImpl(protected val ref: ActorRef) extends Sender {
+
+    def path: ActorPath = ref.path
+
+    override def ![A](msg: A)(implicit sender: ActorRef = Actor.noSender, marshalReply: Sender.MarshalReply[A]): Unit =
+      ref.!(marshalReply marshal msg)(sender)
+
+    def ==(that: ActorRef): Boolean = ref equals that
+  }
+
+  def apply(actorRef: ActorRef): Sender = SenderImpl(actorRef)
+
+  val Empty: Sender = Sender(ActorRef.noSender)
 
   trait MarshalReply[-A] {
     def marshal: A => Any
   }
 
-  def apply(actorRef: ActorRef): Sender = new Sender {
-    protected val ref: ActorRef = actorRef
-  }
-
-  val Empty: Sender = Sender(ActorRef.noSender)
+  lazy val TestIdentityMarshaller: MarshalReply[Any] = new MarshalReply[Any] { def marshal = identity }
 }

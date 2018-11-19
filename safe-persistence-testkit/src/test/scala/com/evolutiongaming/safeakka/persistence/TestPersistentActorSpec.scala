@@ -74,7 +74,7 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    private implicit val dummyMarshaller = new Sender.MarshalReply[Any] { def marshal = identity }
+    private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
