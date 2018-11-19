@@ -27,7 +27,7 @@ class CounterSpec extends WordSpec with ActorSpec {
     val ref = SafeActorRef[Msg](TestActorRef(props))
   }
 
-  private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
+  private implicit val dummyMarshaller = Sender.MarshalReply.AnyImpl
 
   def counter(state: Int): Behavior[Msg] = Behavior.onMsg[Msg] {
     case Signal.Msg(msg, sender) =>

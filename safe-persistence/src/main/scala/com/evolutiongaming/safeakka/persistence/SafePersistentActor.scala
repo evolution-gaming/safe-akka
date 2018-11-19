@@ -292,7 +292,7 @@ object SafePersistentActor {
       phase map {
         case Phase.Receiving(behavior) if behavior.onAny(seqNr, sender).isDefinedAt(msg) =>
           log.debug {
-            val senderStr = if (sender == context.system.deadLetters) "" else s", sender: $sender"
+            val senderStr = if (sender == Sender(context.system.deadLetters)) "" else s", sender: $sender"
             s"[$seqNr] onAny $msg$senderStr"
           }
 

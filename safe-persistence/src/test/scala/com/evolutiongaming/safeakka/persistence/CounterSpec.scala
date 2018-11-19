@@ -51,7 +51,7 @@ class CounterSpec extends WordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
+    private implicit val dummyMarshaller = Sender.MarshalReply.AnyImpl
 
     def persistenceSetup(ctx: ActorCtx) = {
 

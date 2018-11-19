@@ -13,8 +13,6 @@ trait Sender {
     tell(message, context.sender())
 
   def path: ActorPath
-
-  def ==(that: ActorRef): Boolean
 }
 
 object Sender {
@@ -25,8 +23,6 @@ object Sender {
       ref.!(marshalReply marshal msg)(sender)
 
     def path: ActorPath = ref.path
-
-    def ==(that: ActorRef): Boolean = ref equals that
   }
 
   def apply(actorRef: ActorRef): Sender = SenderImpl(actorRef)
@@ -37,5 +33,9 @@ object Sender {
     def marshal: A => Any
   }
 
-  lazy val TestIdentityMarshaller: MarshalReply[Any] = new MarshalReply[Any] { def marshal = identity }
+  object MarshalReply {
+    lazy val AnyImpl: MarshalReply[Any] = new MarshalReply[Any] {
+      def marshal = identity
+    }
+  }
 }

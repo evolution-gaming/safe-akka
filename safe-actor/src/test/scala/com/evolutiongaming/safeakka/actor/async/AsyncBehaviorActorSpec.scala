@@ -327,7 +327,7 @@ class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
     lazy val successful = Future.successful(())
     lazy val ref = newRef()
 
-    private implicit val dummyMarshaller = Sender.TestIdentityMarshaller
+    private implicit val dummyMarshaller = Sender.MarshalReply.AnyImpl
 
     def failed(idx: Int) = Future.failed(TestException(idx))
 
