@@ -5,6 +5,7 @@ import akka.testkit.TestActorRef
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import org.scalatest.WordSpec
 
+
 class CounterSpec extends WordSpec with ActorSpec {
 
   "Counter" should {
@@ -15,7 +16,7 @@ class CounterSpec extends WordSpec with ActorSpec {
       ref ! Msg.Inc
       expectMsg(2)
       ref ! Msg.Dec
-      expectMsg(1)
+      expectMsg("1")
       ref ! Msg.Inc
       expectMsg(2)
       ref ! PoisonPill
@@ -23,27 +24,41 @@ class CounterSpec extends WordSpec with ActorSpec {
   }
 
   private trait Scope extends ActorScope {
-    val props = Props(SafeActor[Msg](_ => (counter(0), ActorLog.empty)))
-    val ref = SafeActorRef[Msg](TestActorRef(props))
+    val props = Props(SafeActor[Msg[_]](_ => (counter(0), ActorLog.empty)))
+    val ref = SafeActorRef[Msg[_]](TestActorRef(props))
   }
 
-  private implicit val dummyMarshaller = Sender.MarshalReply.AnyImpl
-
-  def counter(state: Int): Behavior[Msg] = Behavior.onMsg[Msg] {
+  def counter(state: Int): Behavior[Msg[_]] = Behavior.onMsg[Msg[_]] {
     case Signal.Msg(msg, sender) =>
+
       val result = msg match {
-        case Msg.Inc => state + 1
-        case Msg.Dec => state - 1
+        case m @ Msg.Inc =>
+
+          implicit val marshaller = m.marshaller
+          sender ! state + 1
+          state + 1
+        case m @ Msg.Dec =>
+
+          implicit val marshaller = m.marshaller
+          sender ! (state - 1).toString
+          state - 1
       }
-      sender ! result
       counter(result)
   }
 
 
-  sealed trait Msg
+  sealed abstract class Msg[T](implicit val marshaller: Sender.MarshalReply[T])
 
   object Msg {
-    case object Inc extends Msg
-    case object Dec extends Msg
+    private implicit val intMarshaller = new Sender.MarshalReply[Int] {
+      def marshal = identity
+    }
+
+    private implicit val stringMarshaller = new Sender.MarshalReply[String] {
+      def marshal = identity
+    }
+
+    case object Inc extends Msg[Int]
+    case object Dec extends Msg[String]
   }
 }
