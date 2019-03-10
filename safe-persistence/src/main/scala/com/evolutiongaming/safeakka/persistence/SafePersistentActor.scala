@@ -297,7 +297,12 @@ object SafePersistentActor {
           }
 
           val next = behavior.onAny(seqNr, sender)(msg)
-          nextPhase(next, behavior.onSignal(PersistenceSignal.Sys(Signal.PostStop), _))
+          val onSignal = (seqNr: SeqNr) => {
+            behavior.onSignal(PersistenceSignal.Sys(Signal.PostStop), seqNr)
+            ()
+          }
+          nextPhase(next, onSignal)
+
 
         case phase =>
           onUnhandled(msg, s"[$seqNr] onCmd")
@@ -307,7 +312,11 @@ object SafePersistentActor {
 
     def nextPhase(phase: Phase.Receiving, signal: PersistenceSignal[C], seqNr: SeqNr): Phase = {
       val behavior = phase.behavior
-      nextPhase(behavior.onSignal(signal, seqNr), behavior.onSignal(PersistenceSignal.Sys(Signal.PostStop), _))
+      val onSignal = (seqNr: SeqNr) => {
+        behavior.onSignal(PersistenceSignal.Sys(Signal.PostStop), seqNr)
+        ()
+      }
+      nextPhase(behavior.onSignal(signal, seqNr), onSignal)
     }
 
     def nextPhase(behavior: PersistentBehavior[C, E], onStop: SeqNr => Unit): Phase = behavior match {

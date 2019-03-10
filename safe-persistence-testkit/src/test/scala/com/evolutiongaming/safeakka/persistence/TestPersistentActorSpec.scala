@@ -74,7 +74,7 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
+    val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
       def persistenceId = Scope.this.persistenceId
 

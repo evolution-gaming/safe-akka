@@ -332,13 +332,14 @@ class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
     def flush(): Unit = {
       ref ! Identify(())
       expectMsgType[ActorIdentity]
+      ()
     }
 
     def onStop(dropped: List[Signal.Msg[M]]): Unit = {
       testActor ! Stopped(dropped)
     }
 
-    def behavior(ctx: ActorCtx) = AsyncBehavior[S, M](ctx, log, Nil, onStop) { (state, signal) =>
+    def behavior(ctx: ActorCtx) = AsyncBehavior[S, M](ctx, log, Nil, onStop) { (_, signal) =>
       implicit val ec = CurrentThreadExecutionContext
       signal match {
         case Signal.Msg(msg, sender) => msg match {

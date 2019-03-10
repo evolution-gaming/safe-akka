@@ -85,7 +85,8 @@ object SafeActor {
       case Behavior.Same         => Phase.Receiving(prev)
       case Behavior.Stop         =>
         context stop self
-        Phase.Stopping(() => prev.onSignal(Signal.PostStop))
+        val onSignal = () => { prev.onSignal(Signal.PostStop); () }
+        Phase.Stopping(onSignal)
     }
 
     def invalid(phase: Phase): Nothing = sys.error(s"invalid phase $phase")

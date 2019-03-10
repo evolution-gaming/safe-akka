@@ -3,11 +3,12 @@ sudo: false
 
 language: scala
 
-scala:
-  - 2.12.7
-  - 2.11.12
+jdk:
+  - oraclejdk8
+  - openjdk11
 
-jdk: oraclejdk8
+scala:
+  - 2.12.8
 
 script: sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 

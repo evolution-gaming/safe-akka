@@ -107,7 +107,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
     val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
+    val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
       def persistenceId = Scope.this.persistenceId
 
@@ -224,7 +224,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     case class Cmd(events: Nel[Event])
 
 
-    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
+    val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
       val persistenceId = UUID.randomUUID().toString
 
@@ -247,7 +247,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
         def onStopped(state: State, seqNr: SeqNr) = {}
 
-        def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, seqNr) =>
+        def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, _) =>
           signal match {
             case signal: PersistenceSignal.System   =>
               testActor.tell(signal, ActorRef.noSender)
