@@ -9,6 +9,8 @@ import scala.concurrent.duration._
 
 class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
 
+  private val actorLog = ActorLog.empty.prefixed("SafeActorSpec")
+
   "SafeActor" should {
 
     "proxy to behavior" in new Scope {
@@ -61,7 +63,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
     "stop actor on startup" in new ActorScope {
       def actor = SafeActor[Any] { ctx =>
         watch(ctx.self)
-        (Behavior.stop, ActorLog.empty)
+        (Behavior.stop, actorLog)
       }(Unapply.AnyUnapply)
 
       val ref = TestActorRef(actor)
@@ -78,7 +80,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
           Behavior.same
       }
 
-      def actor = SafeActor[Stop.type](_ => (behavior, ActorLog.empty))
+      def actor = SafeActor[Stop.type](_ => (behavior, actorLog))
       val ref = TestActorRef(actor)
       ref ! Stop
       expectMsg(Signal.PostStop)
@@ -94,7 +96,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
 
     def actor = SafeActor[Any] { ctx =>
       ctx.setReceiveTimeout(100.millis)
-      (behavior, ActorLog.empty)
+      (behavior, actorLog)
     }(Unapply.AnyUnapply)
 
     lazy val ref = TestActorRef(actor)
@@ -116,7 +118,7 @@ class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
         case signal @ Signal.PostStop  => testActor.tell(signal, ActorRef.noSender)
         case _                         => ()
       }
-      (behavior, ActorLog.empty)
+      (behavior, actorLog)
     }
 
     val ref = SafeActorRef(setup)

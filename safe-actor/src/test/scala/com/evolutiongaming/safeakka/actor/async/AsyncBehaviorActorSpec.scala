@@ -321,7 +321,7 @@ class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
   }
 
   //  val log = ActorLog(system, getClass)
-  val log = ActorLog.empty
+  val log = ActorLog.empty.prefixed("AsyncBehaviorActorSpec")
 
   private trait Scope extends ActorScope {
     lazy val successful = Future.successful(())
@@ -416,7 +416,7 @@ class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
 
     def newRef() = {
       val setup: SetupActor[M] = (ctx: ActorCtx) => {
-        val log = ActorLog.empty
+        val log = ActorLog.empty.prefixed("AsyncBehaviorActorSpec")
         (behavior(ctx), log)
       }
       SafeActorRef(setup)

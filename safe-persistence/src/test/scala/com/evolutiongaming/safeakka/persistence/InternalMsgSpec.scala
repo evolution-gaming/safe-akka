@@ -30,7 +30,7 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
 
     def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
-      val log = ActorLog.empty
+      val log = ActorLog.empty.prefixed(persistenceId)
 
       def persistenceId = Scope.this.persistenceId
 

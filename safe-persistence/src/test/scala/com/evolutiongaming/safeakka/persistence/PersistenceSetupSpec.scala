@@ -7,11 +7,13 @@ import org.scalatest.{FunSuite, Matchers}
 
 class PersistenceSetupSpec extends FunSuite with Matchers {
 
+  val actorLog = ActorLog.empty.prefixed("PersistenceSetupSpec")
+
   val setup = new PersistenceSetup[Unit, Unit, String, String] {
 
     def persistenceId = "persistenceId"
 
-    def log = ActorLog.empty
+    def log = actorLog
 
     def journalId = Some("journalId")
 

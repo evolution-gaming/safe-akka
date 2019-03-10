@@ -115,7 +115,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
       def snapshotId = None
 
-      def log = ActorLog.empty
+      def log = ActorLog.empty.prefixed(persistenceId)
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
@@ -232,7 +232,7 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
 
       def snapshotId = None
 
-      def log = ActorLog.empty
+      def log = ActorLog.empty.prefixed(persistenceId)
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],

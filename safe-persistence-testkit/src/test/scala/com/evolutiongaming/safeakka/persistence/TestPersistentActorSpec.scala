@@ -82,7 +82,7 @@ class TestPersistentActorSpec extends WordSpec with ActorSpec {
 
       def snapshotId = None
 
-      def log = ActorLog.empty
+      def log = ActorLog.empty.prefixed(persistenceId)
 
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[(Event, SeqNr)]],

@@ -20,7 +20,8 @@ class InternalMsgSpec extends WordSpec with ActorSpec {
   }
 
   private trait Scope extends ActorScope {
-    val props = Props(SafeActor[Msg](ctx => (setup(ctx, 0), ActorLog.empty)))
+    val actorLog = ActorLog.empty.prefixed("InternalMsgSpec")
+    val props = Props(SafeActor[Msg](ctx => (setup(ctx, 0), actorLog)))
     val ref = SafeActorRef[Msg](TestActorRef(props))
   }
 

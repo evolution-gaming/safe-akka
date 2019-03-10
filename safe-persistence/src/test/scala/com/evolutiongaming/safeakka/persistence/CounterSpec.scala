@@ -59,7 +59,7 @@ class CounterSpec extends WordSpec with ActorSpec {
 
         val persistenceId = UUID.randomUUID().toString
 
-        val log = ActorLog.empty
+        val log = ActorLog(system, classOf[CounterSpec]).prefixed(persistenceId)
 
         def journalId = None
 

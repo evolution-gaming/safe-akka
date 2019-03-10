@@ -23,6 +23,7 @@ class CounterSpec extends WordSpec with ActorSpec {
   }
 
   private trait Scope extends ActorScope {
+    val actorLog = ActorLog.empty.prefixed("CounterSpec")
     val props = Props(SafeActor[Msg](_ => (counter(0), ActorLog.empty)))
     val ref = SafeActorRef[Msg](TestActorRef(props))
   }
