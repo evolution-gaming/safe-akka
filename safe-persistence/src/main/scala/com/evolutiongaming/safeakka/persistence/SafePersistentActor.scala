@@ -138,6 +138,7 @@ object SafePersistentActor {
     def rcvRecover: Receive = {
       case asE(event)                      => onEvent(event, lastSeqNr())
       case ap.SnapshotOffer(m, asS(state)) => onSnapshotOffer(SnapshotOffer(m, state))
+      case ap.SnapshotOffer(m, snapshot)   => sys.error(s"$persistenceId [${m.sequenceNr}] unexpected snapshot $snapshot")
       case ap.RecoveryCompleted            => onRecoveryCompleted(lastSeqNr())
     }
 
@@ -167,7 +168,7 @@ object SafePersistentActor {
     def onSystem(signal: Signal.System, seqNr: SeqNr): Unit = {
       log.debug(s"[$seqNr] onSystem $signal")
 
-      def unexpected(phase: Phase) = sys error s"$persistenceId [$seqNr] unexpected signal $signal in phase $phase"
+      def unexpected(phase: Phase) = sys.error(s"$persistenceId [$seqNr] unexpected signal $signal in phase $phase")
 
       phase map {
         case phase: Phase.Receiving =>
