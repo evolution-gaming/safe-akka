@@ -30,12 +30,12 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     "stop while reading snapshot" in new Scope {
       ref ! Cmd.Append(1)
       expectMsg(RecoveryStarted(None))
-      expectMsg(Success((1, 1l)))
-      expectMsg((1, 1l) :: Nil)
+      expectMsg(Success((1, 1L)))
+      expectMsg((1, 1L) :: Nil)
 
       ref ! Cmd.Append(2)
-      expectMsg(Success((2, 2l)))
-      expectMsg((2, 2l) :: (1, 1l) :: Nil)
+      expectMsg(Success((2, 2L)))
+      expectMsg((2, 2L) :: (1, 1L) :: Nil)
 
       ref ! Cmd.SaveSnapshot
       expectMsgType[PersistenceSignal.SaveSnapshotSuccess]
@@ -69,8 +69,8 @@ class SafePersistentActorSpec extends WordSpec with ActorSpec {
     "stop self" in new Scope {
       ref ! Cmd.Append(1)
       expectMsg(RecoveryStarted(None))
-      expectMsg(Success((1, 1l)))
-      expectMsg((1, 1l) :: Nil)
+      expectMsg(Success((1, 1L)))
+      expectMsg((1, 1L) :: Nil)
       ref ! Cmd.Stop
       expectMsg(Stopped)
       expectMsg(PersistenceSignal.Sys(Signal.PostStop))

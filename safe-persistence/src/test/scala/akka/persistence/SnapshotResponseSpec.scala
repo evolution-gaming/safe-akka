@@ -7,7 +7,7 @@ import scala.util.control.NoStackTrace
 
 class SnapshotResponseSpec extends FunSuite with Matchers {
 
-  val metadata = SnapshotMetadata("persistenceId", 0l, 0l)
+  val metadata = SnapshotMetadata("persistenceId", 0L, 0L)
   val criteria = SnapshotSelectionCriteria()
 
   test("unapply SaveSnapshotSuccess") {

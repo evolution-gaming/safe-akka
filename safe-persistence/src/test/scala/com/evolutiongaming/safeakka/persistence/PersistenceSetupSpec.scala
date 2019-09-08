@@ -49,9 +49,9 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
 
     val persist = setup2
       .onRecoveryStarted(None, Journaller.empty, Snapshotter.empty)
-      .onCompleted((), 0l)
+      .onCompleted((), 0L)
       .asInstanceOf[PersistentBehavior.Rcv[Int, Int]]
-      .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0l)
+      .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0L)
       .asInstanceOf[PersistentBehavior.Persist[Int, Int]]
 
     persist.records.map(_.event) shouldEqual Nel(0)
@@ -63,9 +63,9 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
 
     val persist = setup2
       .onRecoveryStarted(None, Journaller.empty, Snapshotter.empty)
-      .onCompleted((), 0l)
+      .onCompleted((), 0L)
       .asInstanceOf[PersistentBehavior.Rcv[Int, String]]
-      .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0l)
+      .onSignal(PersistenceSignal.Cmd(0, ActorRef.noSender), 0L)
       .asInstanceOf[PersistentBehavior.Persist[Int, String]]
 
     persist.records.map(_.event) shouldEqual Nel("0")
@@ -77,9 +77,9 @@ class PersistenceSetupSpec extends FunSuite with Matchers {
 
     val persist = setup2
       .onRecoveryStarted(None, Journaller.empty, Snapshotter.empty)
-      .onCompleted((), 0l)
+      .onCompleted((), 0L)
       .asInstanceOf[PersistentBehavior.Rcv[String, Int]]
-      .onSignal(PersistenceSignal.Cmd("0", ActorRef.noSender), 0l)
+      .onSignal(PersistenceSignal.Cmd("0", ActorRef.noSender), 0L)
       .asInstanceOf[PersistentBehavior.Persist[String, Int]]
 
     persist.records.map(_.event) shouldEqual Nel(0)

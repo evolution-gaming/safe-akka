@@ -10,7 +10,7 @@ class SnapshotterSpec extends WordSpec with ActorSpec with Matchers {
 
     /*"load" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)
-      snapshotter.load("persistenceId", SnapshotSelectionCriteria(), 0l)
+      snapshotter.load("persistenceId", SnapshotSelectionCriteria(), 0L)
     }*/
 
     "save" in new ActorScope {
@@ -21,7 +21,7 @@ class SnapshotterSpec extends WordSpec with ActorSpec with Matchers {
 
     "delete" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)
-      snapshotter.delete(0l)
+      snapshotter.delete(0L)
     }
 
     "delete by criteria" in new ActorScope {
