@@ -3,9 +3,10 @@ package com.evolutiongaming.safeakka.actor
 import akka.actor.{ActorIdentity, Identify, PoisonPill, ReceiveTimeout}
 import akka.testkit.TestProbe
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class SafeActorRefSpec extends WordSpec with ActorSpec with Matchers {
+class SafeActorRefSpec extends AnyWordSpec with ActorSpec with Matchers {
 
   "SafeActorRef" should {
 

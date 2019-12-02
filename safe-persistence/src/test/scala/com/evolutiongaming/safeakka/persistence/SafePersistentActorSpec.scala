@@ -9,11 +9,11 @@ import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.TestSerializer.Msg
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
-import org.scalatest.WordSpec
 
 import scala.util.{Failure, Success}
+import org.scalatest.wordspec.AnyWordSpec
 
-class SafePersistentActorSpec extends WordSpec with ActorSpec {
+class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
 
 
   type Event = Int

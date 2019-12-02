@@ -7,11 +7,11 @@ import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
-import org.scalatest.WordSpec
 
 import scala.concurrent.duration._
+import org.scalatest.wordspec.AnyWordSpec
 
-class CounterSpec extends WordSpec with ActorSpec {
+class CounterSpec extends AnyWordSpec with ActorSpec {
   import CounterSpec._
 
   "Counter" should {

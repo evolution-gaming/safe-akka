@@ -3,9 +3,9 @@ package com.evolutiongaming.safeakka.actor
 import akka.actor.{PoisonPill, Props}
 import akka.testkit.TestActorRef
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 
-class CounterSpec extends WordSpec with ActorSpec {
+class CounterSpec extends AnyWordSpec with ActorSpec {
 
   "Counter" should {
 

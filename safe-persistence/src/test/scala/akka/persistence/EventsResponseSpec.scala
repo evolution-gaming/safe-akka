@@ -1,11 +1,12 @@
 package akka.persistence
 
 import com.evolutiongaming.safeakka.persistence.{PersistenceSignal => Signal}
-import org.scalatest.{FunSuite, Matchers}
 
 import scala.util.control.NoStackTrace
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class EventsResponseSpec extends FunSuite with Matchers {
+class EventsResponseSpec extends AnyFunSuite with Matchers {
 
   test("unapply DeleteMessagesSuccess") {
     EventsResponse.unapply(DeleteMessagesSuccess(0L)) shouldEqual Some(Signal.DeleteEventsSuccess(0L))

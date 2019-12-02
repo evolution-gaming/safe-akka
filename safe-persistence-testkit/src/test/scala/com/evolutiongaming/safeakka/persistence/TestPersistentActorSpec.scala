@@ -8,9 +8,9 @@ import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 
-class TestPersistentActorSpec extends WordSpec with ActorSpec {
+class TestPersistentActorSpec extends AnyWordSpec with ActorSpec {
 
   type Event = Int
   type State = (Int, SeqNr)

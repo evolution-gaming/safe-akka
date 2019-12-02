@@ -4,9 +4,9 @@ import akka.actor.{ActorRef, Props}
 import akka.testkit.TestActorRef
 import com.evolutiongaming.safeakka.actor.Behavior.Rcv
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 
-class InternalMsgSpec extends WordSpec with ActorSpec {
+class InternalMsgSpec extends AnyWordSpec with ActorSpec {
 
   "Counter" should {
 

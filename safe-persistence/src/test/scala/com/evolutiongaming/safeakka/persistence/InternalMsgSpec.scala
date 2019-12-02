@@ -7,9 +7,9 @@ import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender}
 import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 
-class InternalMsgSpec extends WordSpec with ActorSpec {
+class InternalMsgSpec extends AnyWordSpec with ActorSpec {
 
   type Event = Int
   type State = Int
