@@ -4,12 +4,12 @@ import akka.actor.{ActorIdentity, Identify}
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.safeakka.actor._
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.WordSpec
 
 import scala.concurrent.{Future, Promise}
 import scala.util.control.NoStackTrace
+import org.scalatest.wordspec.AnyWordSpec
 
-class AsyncBehaviorActorSpec extends WordSpec with ActorSpec {
+class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
 
   sealed trait M
 

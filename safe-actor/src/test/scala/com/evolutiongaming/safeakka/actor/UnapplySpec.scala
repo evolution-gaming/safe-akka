@@ -1,8 +1,9 @@
 package com.evolutiongaming.safeakka.actor
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class UnapplySpec extends FunSuite with Matchers {
+class UnapplySpec extends AnyFunSuite with Matchers {
 
   test("either") {
     val unapply = Unapply.either[Int, String]

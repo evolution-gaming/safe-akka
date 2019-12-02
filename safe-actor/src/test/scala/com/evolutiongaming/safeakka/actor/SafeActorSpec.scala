@@ -3,11 +3,12 @@ package com.evolutiongaming.safeakka.actor
 import akka.actor.{ActorIdentity, ActorRef, Identify, PoisonPill, ReceiveTimeout}
 import akka.testkit.{TestActorRef, TestProbe}
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.{Matchers, WordSpec}
 
 import scala.concurrent.duration._
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class SafeActorSpec extends WordSpec with ActorSpec with Matchers {
+class SafeActorSpec extends AnyWordSpec with ActorSpec with Matchers {
 
   private val actorLog = ActorLog.empty.prefixed("SafeActorSpec")
 

@@ -3,9 +3,10 @@ package com.evolutiongaming.safeakka.persistence
 import akka.actor.ActorRef
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.ActorLog
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class PersistenceSetupSpec extends FunSuite with Matchers {
+class PersistenceSetupSpec extends AnyFunSuite with Matchers {
 
   val actorLog = ActorLog.empty.prefixed("PersistenceSetupSpec")
 

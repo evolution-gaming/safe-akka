@@ -2,9 +2,10 @@ package com.evolutiongaming.safeakka.persistence
 
 import akka.persistence.SnapshotSelectionCriteria
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class SnapshotterSpec extends WordSpec with ActorSpec with Matchers {
+class SnapshotterSpec extends AnyWordSpec with ActorSpec with Matchers {
 
   "Snapshotter" should {
 

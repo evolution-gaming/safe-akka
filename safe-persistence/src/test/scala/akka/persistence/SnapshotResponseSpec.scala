@@ -1,11 +1,12 @@
 package akka.persistence
 
 import com.evolutiongaming.safeakka.persistence.{PersistenceSignal => Signal}
-import org.scalatest.{FunSuite, Matchers}
 
 import scala.util.control.NoStackTrace
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class SnapshotResponseSpec extends FunSuite with Matchers {
+class SnapshotResponseSpec extends AnyFunSuite with Matchers {
 
   val metadata = SnapshotMetadata("persistenceId", 0L, 0L)
   val criteria = SnapshotSelectionCriteria()
