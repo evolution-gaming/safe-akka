@@ -9,9 +9,9 @@ import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.TestSerializer.Msg
 import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.util.{Failure, Success}
-import org.scalatest.wordspec.AnyWordSpec
 
 class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
 
@@ -120,7 +120,8 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
       def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
         journaller: Journaller,
-        snapshotter: Snapshotter[State]) = {
+        snapshotter: Snapshotter[State]
+      ) = {
 
         testActor.tell(RecoveryStarted(offer), ActorRef.noSender)
 

@@ -2,11 +2,12 @@ package com.evolutiongaming.safeakka.actor.util
 
 import akka.actor.ActorSystem
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestKit}
+import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 trait ActorSpec extends BeforeAndAfterAll { this: Suite =>
 
-  implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName)
+  implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName, ConfigFactory.load("test.conf"))
 
   override protected def afterAll(): Unit = {
     try {

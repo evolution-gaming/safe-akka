@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Akka {
-    private val version = "2.5.25"
+    private val version = "2.6.3"
     val actor               = "com.typesafe.akka" %% "akka-actor"             % version
     val persistence         = "com.typesafe.akka" %% "akka-persistence"       % version
     val testkit             = "com.typesafe.akka" %% "akka-testkit"           % version
@@ -12,10 +12,15 @@ object Dependencies {
     val slf4j               = "com.typesafe.akka" %% "akka-slf4j"             % version
   }
 
+  object Cats {
+    private val version = "2.0.0"
+    val core = "org.typelevel" %% "cats-core" % version
+  }
+
   object Slf4j {
     private val version = "1.7.28"
-    val api                 = "org.slf4j" % "slf4j-api"        % version
-    val `log4j-over-slf4j`  = "org.slf4j" % "log4j-over-slf4j" % version
+    val api                = "org.slf4j" % "slf4j-api"        % version
+    val `log4j-over-slf4j` = "org.slf4j" % "log4j-over-slf4j" % version
   }
 
   val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.1.1"

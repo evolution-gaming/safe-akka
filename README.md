@@ -127,9 +127,11 @@ See [CounterSpec](safe-persistence/src/test/scala/com/evolutiongaming/safeakka/p
 ```scala
 resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
 
-libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "2.0.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "2.1.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "2.0.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "2.1.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "2.0.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-async" % "2.1.0"
+
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "2.1.0"
 ``` 

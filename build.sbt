@@ -8,7 +8,7 @@ lazy val commonSettings = Seq(
   organizationHomepage := Some(url("http://evolutiongaming.com")),
   bintrayOrganization := Some("evolutiongaming"),
   scalaVersion := crossScalaVersions.value.head,
-  crossScalaVersions := Seq("2.13.0", "2.12.9"),
+  crossScalaVersions := Seq("2.13.1", "2.12.10"),
   scalacOptions in(Compile, doc) ++= Seq("-groups", "-implicits", "-no-link-warnings"),
   resolvers += Resolver.bintrayRepo("evolutiongaming", "maven"),
   resolvers += Resolver.bintrayRepo("dnvriend", "maven"),
@@ -20,14 +20,21 @@ lazy val safeAkka = (project
   in file(".")
   settings (name := "safe-akka")
   settings commonSettings
-  aggregate(safeActor, safePersistence, safePersistenceTestkit))
+  aggregate(
+    safeActor,
+    safePersistence,
+    safePersistenceTestkit,
+    safePersistenceAsync))
 
 lazy val safeActor = (project
   in file("safe-actor")
   settings (name := "safe-actor")
   settings commonSettings
   settings (libraryDependencies ++= Seq(
-    Akka.actor, Akka.testkit % Test, Akka.stream % Test, Akka.`persistence-query` % Test,
+    Akka.actor,
+    Akka.testkit % Test,
+    Akka.stream % Test,
+    Akka.`persistence-query` % Test,
     scalatest % Test,
     `executor-tools`,
     nel)))
@@ -40,6 +47,19 @@ lazy val safePersistence = (project
   settings (libraryDependencies ++= Seq(
     Akka.persistence,
     Akka.slf4j % Test,
+    `akka-persistence-inmemory` % Test,
+    `logback-classic` % Test,
+    Slf4j.api % Test,
+    Slf4j.`log4j-over-slf4j` % Test)))
+
+lazy val safePersistenceAsync = (project
+  in file("safe-persistence-async")
+  settings (name := "safe-persistence-async")
+  settings commonSettings
+  dependsOn safePersistence % "test->test;compile->compile"
+  settings (libraryDependencies ++= Seq(
+    Akka.stream,
+    Cats.core,
     `akka-persistence-inmemory` % Test,
     `logback-classic` % Test,
     Slf4j.api % Test,
