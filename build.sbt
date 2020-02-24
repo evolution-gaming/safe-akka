@@ -59,11 +59,7 @@ lazy val safePersistenceAsync = (project
   dependsOn safePersistence % "test->test;compile->compile"
   settings (libraryDependencies ++= Seq(
     Akka.stream,
-    Cats.core,
-    `akka-persistence-inmemory` % Test,
-    `logback-classic` % Test,
-    Slf4j.api % Test,
-    Slf4j.`log4j-over-slf4j` % Test)))
+    Cats.core)))
 
 lazy val safePersistenceTestkit = (project
   in file("safe-persistence-testkit")
