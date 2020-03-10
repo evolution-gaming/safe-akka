@@ -9,12 +9,13 @@ class SnapshotterSpec extends AnyWordSpec with ActorSpec with Matchers {
 
   "Snapshotter" should {
 
-    /*"load" in new ActorScope {
-      val snapshotter = Snapshotter[Unit](testActor)
-      snapshotter.load("persistenceId", SnapshotSelectionCriteria(), 0L)
-    }*/
-
     "save" in new ActorScope {
+      val snapshotter = Snapshotter[Unit](testActor)
+      snapshotter.save(1L, ())
+      expectMsg(())
+    }
+
+    "save no seqNr" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)
       snapshotter.save(())
       expectMsg(())
