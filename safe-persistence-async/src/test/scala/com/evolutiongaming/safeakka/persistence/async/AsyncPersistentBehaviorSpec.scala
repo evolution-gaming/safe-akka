@@ -3,6 +3,7 @@ package com.evolutiongaming.safeakka.persistence.async
 import java.util.UUID
 
 import akka.actor.ActorRef
+import cats.implicits._
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
@@ -30,7 +31,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       ref ! Cmd.Get
       expectMsg(Counter(0, 0L))
       ref ! Cmd(Event.Inc)
-      expectMsg(Counter(1, 1L))
+      expectMsg((Counter(1, 1L), 1L.pure[Try]))
 
       val ref2 = newRef
       ref2 ! Cmd.Get
@@ -40,7 +41,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
     "handle exception withing actor rcv in sync mode" in new Scope {
       ref ! Cmd.Async(Future.failed(TestException))
       ref ! Cmd(Event.Inc)
-      expectMsg(Counter(1, 1L))
+      expectMsg((Counter(1, 1L), 1L.pure[Try]))
     }
 
     "handle exception withing actor rcv in async mode" in new Scope {
@@ -51,7 +52,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       promise.failure(TestException)
 
       ref ! Cmd(Event.Inc)
-      expectMsg(Counter(1, 1L))
+      expectMsg((Counter(1, 1L), 1L.pure[Try]))
     }
 
     "preserve order" in new Scope {
@@ -59,7 +60,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       expectMsg(Counter(0, 0L))
 
       ref ! Cmd(Event.Inc, Event.Dec, Event.Inc)
-      expectMsg(Counter(1, 3L))
+      expectMsg((Counter(1, 3L), 3L.pure[Try]))
 
       val promise1 = Promise[Nel[E]]
       val promise2 = Promise[Nel[E]]
@@ -77,15 +78,15 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       expectNoMessage(100.millis)
       promise1.success(Nel(Event.Dec))
 
-      expectMsg(Counter(0, 4L))
-      expectMsg(Counter(1, 5L))
-      expectMsg(Counter(0, 6L))
-      expectMsg(Counter(1, 7L))
+      expectMsg((Counter(0, 4L), 4L.pure[Try]))
+      expectMsg((Counter(1, 5L), 5L.pure[Try]))
+      expectMsg((Counter(0, 6L), 6L.pure[Try]))
+      expectMsg((Counter(1, 7L), 7L.pure[Try]))
       expectMsg(Counter(1, 7L))
 
       promise2.success(Nel(Event.Inc, Event.Dec, Event.Inc))
-      expectMsg(Counter(2, 10L))
-      expectMsg(Counter(0, 12L))
+      expectMsg((Counter(2, 10L), 10L.pure[Try]))
+      expectMsg((Counter(0, 12L), 12L.pure[Try]))
       expectMsg(Counter(0, 12L))
 
       ref ! Cmd.Get
@@ -99,7 +100,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       expectNoMessage(100.millis)
 
       promise3.success(Nel(Event.Inc))
-      expectMsg(Counter(1, 13L))
+      expectMsg((Counter(1, 13L), 13L.pure[Try]))
       expectMsg(Counter(1, 13L))
       expectMsg(Stopped(Counter(1, 13L)))
       expectMsg(Dropped(Nel(Cmd(Event.Inc), Cmd.Get)))
@@ -174,7 +175,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       def onStopped(seqNr: SeqNr) = {}
     }
 
-    def asyncSignalHandler = new AsyncSignalHandler[S, C, E] {
+    def asyncSignalHandler: AsyncSignalHandler[S, C, E] = new AsyncSignalHandler[S, C, E] {
 
       def handler(state: S, seqNr: SeqNr, signal: PersistenceSignal[C]): AsyncHandler[S, E] = signal match {
 
@@ -203,8 +204,8 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
               val records = events map { event =>
                 Record(event)
               }
-              val onPersisted = (_: Try[Unit]) => sender.tell(stateAfter, ActorRef.noSender)
-              CmdResult.Records(stateAfter, records, onPersisted)
+              val onPersisted = (seqNr: Try[SeqNr]) => sender.tell((stateAfter, seqNr), ActorRef.noSender)
+              CmdResult.Change(stateAfter, records, onPersisted)
             }
           }
 

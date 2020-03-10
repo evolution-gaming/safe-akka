@@ -1,6 +1,7 @@
 package com.evolutiongaming.safeakka.persistence
 
 import scala.concurrent.Future
+import scala.util.Try
 
 package object async {
 
@@ -18,10 +19,13 @@ package object async {
     }
   }
 
+
   type AsyncHandler[S, +E] = Future[Handler[S, E]]
 
   object AsyncHandler {
+
     private val Empty = Future.successful((_: Any, _: SeqNr) => CmdResult.empty[Nothing, Nothing])
+    
 
     def empty[S, E]: AsyncHandler[S, E] = Empty
 
@@ -29,4 +33,7 @@ package object async {
 
     def apply[S, E](handler: Handler[S, E]): AsyncHandler[S, E] = Future.successful(handler)
   }
+
+
+  type OnPersisted = Try[SeqNr] => Unit
 }

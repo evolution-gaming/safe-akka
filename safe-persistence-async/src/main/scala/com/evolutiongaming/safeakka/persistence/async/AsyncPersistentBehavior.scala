@@ -2,6 +2,7 @@ package com.evolutiongaming.safeakka.persistence.async
 
 import akka.actor.{ActorRef, ClassicActorContextProvider, ClassicActorSystemProvider}
 import akka.stream.{Materializer, QueueOfferResult, SystemMaterializer}
+import cats.implicits._
 import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender, Signal}
@@ -80,6 +81,12 @@ private[async] class AsyncPersistentBehavior[S, C, E](
 
     def behavior(state: S, seqNr: SeqNr, queue: Queue[PersistenceSignal[C]]): PersistentBehavior.Rcv[C, E] = {
 
+      type FS = List[Try[Unit] => Unit]
+
+      def run(fs: FS, result: Try[Unit]): Unit = fs.foldRight(()) { (f, _) =>
+        f(result)
+      }
+
       def onHandlers(hs: Nel[SignalAndHandler], promise: Promise[Unit]) = {
         type R = CmdResult.NonStop[S, E]
 
@@ -93,12 +100,6 @@ private[async] class AsyncPersistentBehavior[S, C, E](
         ): PersistentBehavior[C, E] = {
 
           def complete(behavior: => PersistentBehavior[C, E]) = {
-
-            type FS = List[Try[Unit] => Unit]
-
-            def run(fs: FS, result: Try[Unit]): Unit = fs.foldRight(()) { (f, _) =>
-              f(result)
-            }
 
             def onCompleted(fs: FS) = (_: SeqNr) => {
               promise.success(())
@@ -120,6 +121,20 @@ private[async] class AsyncPersistentBehavior[S, C, E](
               case (r: CmdResult.Empty) :: rs =>
                 val f = (_: Try[Unit]) => r.callback()
                 iterRecords(rs, es, f :: fs)
+
+              case (r: CmdResult.Change[S, E]) :: rs =>
+                val records =
+                  if (fs.isEmpty) r.records
+                  else {
+                    val head = r.records.head
+                    val onPersisted = (seqNr: Try[SeqNr]) => {
+                      run(fs, seqNr.unit)
+                      head.onPersisted(seqNr)
+                    }
+                    Nel(head.copy(onPersisted = onPersisted), r.records.tail)
+                  }
+                val onPersisted = (a: Try[Unit]) => r.onPersisted(a.as(seqNr))
+                iterRecords(rs, records :: es, onPersisted :: Nil)
 
               case (r: CmdResult.Records[S, E]) :: rs =>
                 val records =
@@ -144,6 +159,11 @@ private[async] class AsyncPersistentBehavior[S, C, E](
                 val f = (_: Try[Unit]) => r.callback()
                 iterEmpty(rs, f :: fs)
 
+              case (r: CmdResult.Change[S, E]) :: rs =>
+                run(fs, Try.unit)
+                val onPersisted = (a: Try[Unit]) => r.onPersisted(a.as(seqNr))
+                iterRecords(rs, Nel(r.records), onPersisted :: Nil)
+
               case (r: CmdResult.Records[S, E]) :: rs =>
                 run(fs, Try.unit)
                 iterRecords(rs, Nel(r.records), r.onPersisted :: Nil)
@@ -159,11 +179,17 @@ private[async] class AsyncPersistentBehavior[S, C, E](
                 case Success(h) =>
                   val result = h(state, seqNr)
                   result match {
+                    case r: CmdResult.Change[S, E] =>
+                      val newSeqNr = seqNr + r.records.size
+                      val newState = r.state
+                      iterHandlers(newState, newSeqNr, hs, r :: rs, size + 1)
+
                     case r: CmdResult.Records[S, E] =>
                       val newSeqNr = seqNr + r.records.size
                       val newState = r.state
                       iterHandlers(newState, newSeqNr, hs, r :: rs, size + 1)
-                    case r: CmdResult.Empty => iterHandlers(state, seqNr, hs, r :: rs, size + 1)
+
+                    case r: CmdResult.Empty        => iterHandlers(state, seqNr, hs, r :: rs, size + 1)
 
                     case result: CmdResult.Stop =>
                       def behavior = {
