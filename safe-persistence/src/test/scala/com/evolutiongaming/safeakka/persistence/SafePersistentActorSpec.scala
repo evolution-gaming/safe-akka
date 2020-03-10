@@ -180,7 +180,7 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
                   }
 
                 case Cmd.SaveSnapshot =>
-                  snapshotter.save(state)
+                  snapshotter.save(seqNr, state)
                   behavior(state)
 
                 case Cmd.Get =>

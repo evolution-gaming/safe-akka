@@ -8,6 +8,7 @@ trait Snapshotter[-A] { self =>
   /**
     * @see [[akka.persistence.Snapshotter.saveSnapshot]]
     */
+  @deprecated("use another `save` with seqNr as argument", "2.2.1")
   def save(snapshot: A): Unit
 
   /**

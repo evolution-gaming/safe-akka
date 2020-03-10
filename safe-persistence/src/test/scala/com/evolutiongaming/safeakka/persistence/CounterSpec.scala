@@ -94,7 +94,7 @@ class CounterSpec extends AnyWordSpec with ActorSpec {
                     val onPersisted = (seqNr: SeqNr) => {
                       val newCounter = counter(event, seqNr)
                       sender.tell(newCounter, ctx.self)
-                      if (cmd == Cmd.Dec) snapshotter.save(newCounter)
+                      if (cmd == Cmd.Dec) snapshotter.save(seqNr, newCounter)
                       behavior(newCounter)
                     }
 
