@@ -54,7 +54,7 @@ object Snapshotter {
 
 
   def apply[S](snapshotter: akka.persistence.Snapshotter): Snapshotter[S] = {
-    SnapshotterFromPersistenceSnapshotter(snapshotter)
+    SnapshotterInterop(snapshotter)
   }
 
 

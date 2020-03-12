@@ -4,7 +4,7 @@ import akka.persistence.SnapshotProtocol.SaveSnapshot
 import com.evolutiongaming.safeakka
 import com.evolutiongaming.safeakka.persistence.SeqNr
 
-object SnapshotterFromPersistenceSnapshotter {
+object SnapshotterInterop {
 
   def apply[A](snapshotter: Snapshotter): safeakka.persistence.Snapshotter[A] = {
 
