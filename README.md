@@ -1,4 +1,9 @@
-# Safe Akka [![Build Status](https://travis-ci.org/evolution-gaming/safe-akka.svg)](https://travis-ci.org/evolution-gaming/safe-akka) [![Coverage Status](https://coveralls.io/repos/evolution-gaming/safe-akka/badge.svg)](https://coveralls.io/r/evolution-gaming/safe-akka) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8457f5d789694d31b8e8c34e6b9f5e14)](https://www.codacy.com/app/t3hnar/safe-akka?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=evolution-gaming/safe-akka&amp;utm_campaign=Badge_Grade) [![version](https://api.bintray.com/packages/evolutiongaming/maven/safe-akka/images/download.svg)](https://bintray.com/evolutiongaming/maven/safe-akka/_latestVersion) [![License: MIT](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://opensource.org/licenses/MIT)
+# Safe Akka
+[![Build Status](https://github.com/evolution-gaming/safe-akka/workflows/CI/badge.svg)](https://github.com/evolution-gaming/safe-akka/actions?query=workflow%3ACI)
+[![Coverage Status](https://coveralls.io/repos/evolution-gaming/safe-akka/badge.svg)](https://coveralls.io/r/evolution-gaming/safe-akka)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8457f5d789694d31b8e8c34e6b9f5e14)](https://www.codacy.com/app/t3hnar/safe-akka?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=evolution-gaming/safe-akka&amp;utm_campaign=Badge_Grade)
+[![version](https://api.bintray.com/packages/evolutiongaming/maven/safe-akka/images/download.svg)](https://bintray.com/evolutiongaming/maven/safe-akka/_latestVersion)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://opensource.org/licenses/MIT)
 
 This library provides abstraction on top of akka actors in order to add more type safety
 

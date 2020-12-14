@@ -34,7 +34,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and immediately handle msg" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.IncAsync(0, p.future, successful)
       flush()
       p.success(())
@@ -42,8 +42,8 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and asynchronously handle msg" in new Scope {
-      val p0 = Promise[Unit]
-      val p1 = Promise[Unit]
+      val p0 = Promise[Unit]()
+      val p1 = Promise[Unit]()
       ref ! M.IncAsync(0, p0.future, p1.future)
       flush()
       p0.success(())
@@ -53,7 +53,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "immediately get handler and asynchronously handle msg" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.IncAsync(0, successful, p.future)
       flush()
       p.success(())
@@ -61,10 +61,10 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "preserve order" in new Scope {
-      val p0 = Promise[Unit]
-      val p1 = Promise[Unit]
-      val p7 = Promise[Unit]
-      val p8 = Promise[Unit]
+      val p0 = Promise[Unit]()
+      val p1 = Promise[Unit]()
+      val p7 = Promise[Unit]()
+      val p8 = Promise[Unit]()
 
       val msgs = List(
         M.IncAsync(0, p0.future, p1.future),
@@ -118,7 +118,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and immediately handle msg and then stop" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.StopAsync(0, p.future, successful)
       p.success(())
       expectMsg(List(0))
@@ -126,8 +126,8 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and asynchronously handle msg and then stop" in new Scope {
-      val p0 = Promise[Unit]
-      val p1 = Promise[Unit]
+      val p0 = Promise[Unit]()
+      val p1 = Promise[Unit]()
       ref ! M.StopAsync(0, p0.future, p1.future)
       p0.success(())
       p1.success(())
@@ -136,7 +136,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "immediately get handler and asynchronously handle msg and then stop" in new Scope {
-      val p0 = Promise[Unit]
+      val p0 = Promise[Unit]()
       ref ! M.StopAsync(0, successful, p0.future)
       p0.success(())
       expectMsg(List(0))
@@ -144,7 +144,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "immediately get handler and asynchronously handle msg and then stop and not loose enqueued msgs" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.StopAsync(0, successful, p.future)
       val msgs = List[M](
         M.Inc(1),
@@ -161,7 +161,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and immediately handle msg and then stop without loose enqueued msgs" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.StopAsync(0, p.future, successful)
       val msgs = List[M](
         M.Inc(1),
@@ -180,8 +180,8 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and asynchronously handle msg and then stop without loose enqueued msgs" in new Scope {
-      val p0 = Promise[Unit]
-      val p1 = Promise[Unit]
+      val p0 = Promise[Unit]()
+      val p1 = Promise[Unit]()
       ref ! M.StopAsync(0, p0.future, p1.future)
 
       val msg1 = List[M](
@@ -212,7 +212,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "immediately get handler and asynchronously handle msg and then stop without loose enqueued msgs" in new Scope {
-      val p = Promise[Unit]
+      val p = Promise[Unit]()
       ref ! M.StopAsync(0, successful, p.future)
       val msgs = List[M](
         M.Inc(1),
@@ -254,37 +254,37 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and immediately handle msg and not fail" in new Scope {
-      val p0 = Promise[Unit]
+      val p0 = Promise[Unit]()
       ref ! M.IncAsync(0, p0.future, successful)
       flush()
       p0.failure(TestException(0))
       expectMsg(TestException(0))
 
-      val p1 = Promise[Unit]
+      val p1 = Promise[Unit]()
       ref ! M.IncAsync(1, p1.future, successful)
       flush()
       p1.failure(TestException(1))
       expectMsg(TestException(1))
 
-      val p2 = Promise[Unit]
+      val p2 = Promise[Unit]()
       ref ! M.IncAsync(2, p2.future, failed(2))
       flush()
       p2.success(())
       expectMsg(TestException(2))
 
-      val p3 = Promise[Unit]
+      val p3 = Promise[Unit]()
       ref ! M.Fail2(3, p3.future)
       flush()
       p3.success(())
       expectMsg(TestException(3))
 
-      val p4 = Promise[Unit]
+      val p4 = Promise[Unit]()
       ref ! M.Fail3(4, p4.future)
       flush()
       p4.success(())
       expectMsg(TestException(4))
 
-      val p5 = Promise[Unit]
+      val p5 = Promise[Unit]()
       ref ! M.Fail4(5, p5.future, successful)
       flush()
       p5.success(())
@@ -295,8 +295,8 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "asynchronously get handler and asynchronously handle msg and not fail" in new Scope {
-      val p0 = Promise[Unit]
-      val p1 = Promise[Unit]
+      val p0 = Promise[Unit]()
+      val p1 = Promise[Unit]()
       ref ! M.IncAsync(0, p0.future, p1.future)
       flush()
       p0.success(())
@@ -309,7 +309,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     "immediately get handler and asynchronously handle msg and not fail" in new Scope {
-      val p0 = Promise[Unit]
+      val p0 = Promise[Unit]()
       ref ! M.IncAsync(0, successful, p0.future)
       flush()
       p0.failure(TestException(0))

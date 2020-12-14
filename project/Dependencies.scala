@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Akka {
-    private val version = "2.6.3"
+    private val version = "2.6.10"
     val actor               = "com.typesafe.akka" %% "akka-actor"             % version
     val persistence         = "com.typesafe.akka" %% "akka-persistence"       % version
     val testkit             = "com.typesafe.akka" %% "akka-testkit"           % version
@@ -13,7 +13,7 @@ object Dependencies {
   }
 
   object Cats {
-    private val version = "2.0.0"
+    private val version = "2.3.0"
     val core = "org.typelevel" %% "cats-core" % version
   }
 
@@ -23,7 +23,7 @@ object Dependencies {
     val `log4j-over-slf4j` = "org.slf4j" % "log4j-over-slf4j" % version
   }
 
-  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.1"
+  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.3"
   val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.2.3"
   val `akka-persistence-inmemory` = "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.15.2"
   val `executor-tools`            = "com.evolutiongaming" %% "executor-tools"            % "1.0.2"

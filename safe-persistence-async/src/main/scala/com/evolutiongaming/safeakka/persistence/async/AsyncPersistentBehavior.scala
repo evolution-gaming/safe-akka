@@ -35,7 +35,7 @@ private[async] class AsyncPersistentBehavior[S, C, E](
 
     def onBatch(hs: Nel[SignalAndHandler]): Future[Unit] = {
       metrics.onBatch(hs.size)
-      val promise = Promise[Unit]
+      val promise = Promise[Unit]()
       sendToSelf(Handlers(hs, promise))
       promise.future
     }

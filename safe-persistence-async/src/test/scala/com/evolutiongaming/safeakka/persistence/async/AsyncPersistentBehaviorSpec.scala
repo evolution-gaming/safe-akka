@@ -45,7 +45,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
     }
 
     "handle exception withing actor rcv in async mode" in new Scope {
-      val promise = Promise[Nel[E]]
+      val promise = Promise[Nel[E]]()
       ref ! Cmd(promise)
       expectNoMessage(100.millis)
 
@@ -62,9 +62,9 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       ref ! Cmd(Event.Inc, Event.Dec, Event.Inc)
       expectMsg((Counter(1, 3L), 3L.pure[Try]))
 
-      val promise1 = Promise[Nel[E]]
-      val promise2 = Promise[Nel[E]]
-      val promise3 = Promise[Nel[E]]
+      val promise1 = Promise[Nel[E]]()
+      val promise2 = Promise[Nel[E]]()
+      val promise3 = Promise[Nel[E]]()
 
       ref ! Cmd(promise1)
       ref ! Cmd(Event.Inc)
@@ -140,7 +140,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
         PersistenceSignal.Cmd(Cmd(Event.Inc), ActorRef.noSender),
         2L,
       )
-      val PersistentBehavior.Rcv(_, _) = onSignal3(
+      onSignal3(
         PersistenceSignal.Cmd(Cmd(Event.Inc), ActorRef.noSender),
         2L,
       )
