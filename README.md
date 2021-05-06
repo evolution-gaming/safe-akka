@@ -1,8 +1,8 @@
 # Safe Akka
 [![Build Status](https://github.com/evolution-gaming/safe-akka/workflows/CI/badge.svg)](https://github.com/evolution-gaming/safe-akka/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/evolution-gaming/safe-akka/badge.svg)](https://coveralls.io/r/evolution-gaming/safe-akka)
+[![Coverage Status](https://coveralls.io/repos/github/evolution-gaming/safe-akka/badge.svg?branch=master)](https://coveralls.io/github/evolution-gaming/safe-akka?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8457f5d789694d31b8e8c34e6b9f5e14)](https://www.codacy.com/app/t3hnar/safe-akka?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=evolution-gaming/safe-akka&amp;utm_campaign=Badge_Grade)
-[![version](https://api.bintray.com/packages/evolutiongaming/maven/safe-akka/images/download.svg)](https://bintray.com/evolutiongaming/maven/safe-akka/_latestVersion)
+[![Version](https://img.shields.io/badge/version-click-blue)](https://evolution.jfrog.io/artifactory/api/search/latestVersion?g=com.evolutiongaming&a=safe-akka_2.13&repos=public)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://opensource.org/licenses/MIT)
 
 This library provides abstraction on top of akka actors in order to add more type safety
@@ -130,7 +130,7 @@ See [CounterSpec](safe-persistence/src/test/scala/com/evolutiongaming/safeakka/p
 ## Setup
 
 ```scala
-resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
+addSbtPlugin("com.evolution" % "sbt-artifactory-plugin" % "0.0.2")
 
 libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "2.1.0"
 
