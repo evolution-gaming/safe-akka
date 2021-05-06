@@ -6,11 +6,10 @@ lazy val commonSettings = Seq(
   startYear := Some(2017),
   organizationName := "Evolution Gaming",
   organizationHomepage := Some(url("http://evolutiongaming.com")),
-  bintrayOrganization := Some("evolutiongaming"),
   scalaVersion := crossScalaVersions.value.head,
-  crossScalaVersions := Seq("2.13.5", "2.12.12"),
-  scalacOptions in(Compile, doc) ++= Seq("-groups", "-implicits", "-no-link-warnings"),
-  resolvers += Resolver.bintrayRepo("evolutiongaming", "maven"),
+  crossScalaVersions := Seq("2.13.4", "2.12.12"),
+  Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-no-link-warnings"),
+  publishTo := Some(Resolver.evolutionReleases),
   resolvers += Resolver.bintrayRepo("dnvriend", "maven"),
   licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT"))),
   releaseCrossBuild := true)
@@ -20,6 +19,7 @@ lazy val safeAkka = (project
   in file(".")
   settings (name := "safe-akka")
   settings commonSettings
+  settings (publish / skip  := true)
   aggregate(
     safeActor,
     safePersistence,
