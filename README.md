@@ -132,11 +132,11 @@ See [CounterSpec](safe-persistence/src/test/scala/com/evolutiongaming/safeakka/p
 ```scala
 addSbtPlugin("com.evolution" % "sbt-artifactory-plugin" % "0.0.2")
 
-libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "2.1.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-actor" % "3.0.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "2.1.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence" % "3.0.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence-async" % "2.1.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-async" % "3.0.0"
 
-libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "2.1.0"
+libraryDependencies += "com.evolutiongaming" %% "safe-persistence-testkit" % "3.0.0"
 ``` 
