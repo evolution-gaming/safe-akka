@@ -5,6 +5,8 @@ import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import scala.annotation.nowarn
+
 class SnapshotterSpec extends AnyWordSpec with ActorSpec with Matchers {
 
   "Snapshotter" should {
@@ -17,7 +19,7 @@ class SnapshotterSpec extends AnyWordSpec with ActorSpec with Matchers {
 
     "save no seqNr" in new ActorScope {
       val snapshotter = Snapshotter[Unit](testActor)
-      snapshotter.save(())
+      snapshotter.save(()): @nowarn("cat=deprecation")
       expectMsg(())
     }
 

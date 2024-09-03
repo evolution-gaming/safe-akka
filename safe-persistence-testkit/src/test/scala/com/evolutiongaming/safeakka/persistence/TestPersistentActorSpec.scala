@@ -7,7 +7,7 @@ import akka.persistence.SnapshotMetadata
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
-import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
+import com.evolutiongaming.safeakka.persistence.PersistentBehavior as Behavior
 import org.scalatest.wordspec.AnyWordSpec
 
 class TestPersistentActorSpec extends AnyWordSpec with ActorSpec {
@@ -72,30 +72,30 @@ class TestPersistentActorSpec extends AnyWordSpec with ActorSpec {
 
     val eventHandler: EventHandler[State, Event] = { case ((state, _), event, seqNr) => (state + event, seqNr) }
 
-    val persistenceId = UUID.randomUUID().toString
+    val persistenceId: String = UUID.randomUUID().toString
 
-    val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
+    private val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
-      def persistenceId = Scope.this.persistenceId
+      override def persistenceId: String = Scope.this.persistenceId
 
-      def journalId = None
+      override def journalId: Option[String] = None
 
-      def snapshotId = None
+      override def snapshotId: Option[String] = None
 
-      def log = ActorLog.empty.prefixed(persistenceId)
+      override def log: ActorLog = ActorLog.empty.prefixed(persistenceId)
 
-      def onRecoveryStarted(
+      override def onRecoveryStarted(
         offer: Option[SnapshotOffer[(Event, SeqNr)]],
         journaller: Journaller,
-        snapshotter: Snapshotter[(Event, SeqNr)]) = new Recovering {
+        snapshotter: Snapshotter[(Event, SeqNr)]): Recovering = new Recovering {
 
-        def state = offer.map { _.snapshot }.getOrElse((0, 0))
+        override def state: (Event, SeqNr) = offer.map { _.snapshot }.getOrElse((0, 0))
 
-        def eventHandler(state: State, event: Event, seqNr: SeqNr) = (state._1 + event, seqNr)
+        override def eventHandler(state: State, event: Event, seqNr: SeqNr): (Event, SeqNr) = (state._1 + event, seqNr)
 
-        def onCompleted(state: State, seqNr: SeqNr) = behavior(state)
+        override def onCompleted(state: State, seqNr: SeqNr): Behavior[Cmd, Event] = behavior(state)
 
-        def onStopped(state: State, seqNr: SeqNr) = {}
+        override def onStopped(state: State, seqNr: SeqNr): Unit = {}
 
         private def behavior(state: State): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, seqNr) =>
           signal match {
@@ -130,10 +130,10 @@ class TestPersistentActorSpec extends AnyWordSpec with ActorSpec {
         }
       }
 
-      def onStopped(seqNr: SeqNr) = {}
+      override def onStopped(seqNr: SeqNr): Unit = {}
     }
 
-    val ref = TestPersistentActorRef(persistenceSetup, Journaller.empty, Snapshotter.empty)
+    val ref: TestPersistentActorRef[(Event, SeqNr), Cmd, Event] = TestPersistentActorRef(persistenceSetup, Journaller.empty, Snapshotter.empty)
 
     sealed trait Cmd
     object Cmd {

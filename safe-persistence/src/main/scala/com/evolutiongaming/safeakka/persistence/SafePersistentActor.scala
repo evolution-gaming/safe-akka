@@ -1,9 +1,9 @@
 package com.evolutiongaming.safeakka.persistence
 
 import akka.actor.Actor
-import akka.{persistence => ap}
+import akka.persistence as ap
 import com.evolutiongaming.nel.Nel
-import com.evolutiongaming.safeakka.actor._
+import com.evolutiongaming.safeakka.actor.*
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -19,31 +19,31 @@ object SafePersistentActor {
 
     new SafePersistentActor[S, SS, C, E] with PersistentLike[S, SS, C, E] {
 
-      val asS = implicitly[Unapply[S]]
+      override val asS: Unapply[S] = implicitly[Unapply[S]]
 
-      val asC = implicitly[Unapply[C]]
+      override val asC: Unapply[C] = implicitly[Unapply[C]]
 
-      val asE = implicitly[Unapply[E]]
+      override val asE: Unapply[E] = implicitly[Unapply[E]]
 
-      val journaller = Journaller(this)
+      override val journaller: Journaller = Journaller(this)
 
-      val snapshotter = Snapshotter[S](this)
+      override val snapshotter: Snapshotter[S] = Snapshotter[S](this)
 
-      def setupPersistentActor = setupArg
+      override def setupPersistentActor: SetupPersistentActor[S, SS, C, E] = setupArg
 
       override def journalPluginId: String = persistenceSetup.journalId getOrElse super.journalPluginId
 
       override def snapshotPluginId: String = persistenceSetup.snapshotId getOrElse super.snapshotPluginId
 
-      def lastSeqNr() = lastSequenceNr
+      override def lastSeqNr(): SeqNr = lastSequenceNr
 
-      def receiveRecover = rcvRecover orElse {
+      override def receiveRecover: Receive = rcvRecover orElse {
         case msg => onUnhandled(msg, "receiveRecover")
       }
 
-      def receiveCommand = rcvCommand
+      override def receiveCommand: Receive = rcvCommand
 
-      override def onPersistFailure(cause: Throwable, event: Any, seqNr: SeqNr) = {
+      override def onPersistFailure(cause: Throwable, event: Any, seqNr: SeqNr): Unit = {
         try {
           onPersistFailure(cause, lastSeqNr())
         } catch {
@@ -52,7 +52,7 @@ object SafePersistentActor {
         super.onPersistFailure(cause, event, seqNr)
       }
 
-      override def onPersistRejected(cause: Throwable, event: Any, seqNr: SeqNr) = {
+      override def onPersistRejected(cause: Throwable, event: Any, seqNr: SeqNr): Unit = {
         try {
           onPersistRejected(cause, lastSeqNr())
         } catch {
@@ -61,7 +61,7 @@ object SafePersistentActor {
         super.onPersistRejected(cause, event, seqNr)
       }
 
-      def onPersist(behavior: PersistentBehavior.Persist[C, E], onStop: SeqNr => Unit) = {
+      override def onPersist(behavior: PersistentBehavior.Persist[C, E], onStop: SeqNr => Unit): Phase.Persisting = {
         val records = behavior.records
         val events = records.map(_.event)
         persistAll(events.toList) { _ =>
@@ -273,7 +273,7 @@ object SafePersistentActor {
 
     protected def onCmd(signal: PersistenceSignal[C], seqNr: SeqNr): Unit = {
 
-      def logError() = log.error(s"[$seqNr] onCmd $signal")
+      def logError(): Unit = log.error(s"[$seqNr] onCmd $signal")
 
       signal match {
         case _: PersistenceSignal.SaveSnapshotFailure    => logError()

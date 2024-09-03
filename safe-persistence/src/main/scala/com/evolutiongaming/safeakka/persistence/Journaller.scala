@@ -14,9 +14,7 @@ object Journaller {
 
   def empty: Journaller = Empty
 
-  def apply(actor: PersistentActor): Journaller = new Journaller {
-    def delete(toSeqNr: SeqNr): Unit = actor.deleteMessages(toSeqNr)
-  }
+  def apply(actor: PersistentActor): Journaller = (toSeqNr: SeqNr) => actor.deleteMessages(toSeqNr)
 
   private object Empty extends Journaller {
     def delete(toSeqNr: SeqNr): Unit = {}

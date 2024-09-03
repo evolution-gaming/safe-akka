@@ -1,11 +1,12 @@
-import sbt._
+import sbt.*
 
 object Dependencies {
 
   object Akka {
-    private val version = "2.6.10"
+    private val version = "2.6.21"
     val actor               = "com.typesafe.akka" %% "akka-actor"             % version
     val persistence         = "com.typesafe.akka" %% "akka-persistence"       % version
+    val `persistence-tck`   = "com.typesafe.akka" %% "akka-persistence-tck"   % version
     val testkit             = "com.typesafe.akka" %% "akka-testkit"           % version
     val stream              = "com.typesafe.akka" %% "akka-stream"            % version
     val `persistence-query` = "com.typesafe.akka" %% "akka-persistence-query" % version
@@ -13,19 +14,16 @@ object Dependencies {
   }
 
   object Cats {
-    private val version = "2.3.0"
+    private val version = "2.12.0"
     val core = "org.typelevel" %% "cats-core" % version
   }
 
   object Slf4j {
-    private val version = "1.7.30"
+    private val version = "2.0.16"
     val api                = "org.slf4j" % "slf4j-api"        % version
-    val `log4j-over-slf4j` = "org.slf4j" % "log4j-over-slf4j" % version
   }
 
-  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.8"
-  val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.2.3"
-  val `akka-persistence-inmemory` = "com.github.dnvriend" %% "akka-persistence-inmemory" % "2.5.15.2"
-  val `executor-tools`            = "com.evolutiongaming" %% "executor-tools"            % "1.0.2"
-  val nel                         = "com.evolutiongaming" %% "nel"                       % "1.3.4"
+  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.19"
+  val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.5.7"
+  val nel                         = "com.evolutiongaming" %% "nel"                       % "1.3.5"
 }

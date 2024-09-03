@@ -53,7 +53,12 @@ object SafeActorRef {
     def unsafe = ref.unsafe
     def tell[C](msg: C, sender: Option[ActorRef])(implicit canRcv: CanRcv[C, A]) = canRcv match {
       case CanRcv.Identity        => ref.tell(f(msg.asInstanceOf[A]), sender)(CanRcv.identity)
-      case canRcv: CanRcv.Sys[C] => ref.tell(msg, sender)(canRcv)
+      //workaround for Scala 3.3.0 compiler quirk:
+      //  asInstanceOf added because of a compilation error on pattern matching,
+      //  it complained about non-exhaustive match but suggested cases were non-existing
+      //
+      //old code: case canRcv: CanRcv.Sys[C] => ref.tell(msg, sender)(canRcv)
+      case canRcv: CanRcv.Sys[?] => ref.tell(msg, sender)(canRcv.asInstanceOf[CanRcv.Sys[C]])
     }
   }
 

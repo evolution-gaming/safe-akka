@@ -60,24 +60,24 @@ trait ActorCtx {
 
 object ActorCtx {
   def apply(actorContext: ActorContext): ActorCtx = new ActorContextProxy {
-    val context = actorContext
+    override val context: ActorContext = actorContext
   }
 
 
   private[safeakka] trait ActorContextProxy extends ActorCtx {
     def context: ActorContext
 
-    implicit def system = context.system
-    implicit def dispatcher = context.dispatcher
+    override implicit def system: ActorSystem = context.system
+    override implicit def dispatcher: ExecutionContextExecutor = context.dispatcher
 
-    def self: ActorRef = context.self
-    def setReceiveTimeout(timeout: Duration) = context.setReceiveTimeout(timeout)
-    def children = context.children
-    def child(name: String) = context.child(name)
-    def watch(ref: ActorRef) = context.watchWith(ref, Signal.Terminated(ref))
-    def watchWith[A](ref: ActorRef, msg: A) = context.watchWith(ref, msg)
-    def unwatch(ref: ActorRef) = context.unwatch(ref)
-    def parent = context.parent
-    def refFactory = context
+    override def self: ActorRef = context.self
+    override def setReceiveTimeout(timeout: Duration): Unit = context.setReceiveTimeout(timeout)
+    override def children: immutable.Iterable[Sender] = context.children
+    override def child(name: String): Option[Sender] = context.child(name)
+    override def watch(ref: ActorRef): ActorRef = context.watchWith(ref, Signal.Terminated(ref))
+    override def watchWith[A](ref: ActorRef, msg: A): ActorRef = context.watchWith(ref, msg)
+    override def unwatch(ref: ActorRef): ActorRef = context.unwatch(ref)
+    override def parent: ActorRef = context.parent
+    override def refFactory: ActorContext = context
   }
 }

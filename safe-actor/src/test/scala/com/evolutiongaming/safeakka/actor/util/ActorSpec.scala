@@ -7,7 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 
 trait ActorSpec extends BeforeAndAfterAll { this: Suite =>
 
-  implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName, ConfigFactory.load("test.conf"))
+  implicit lazy val system: ActorSystem = ActorSystem(getClass.getSimpleName, ConfigFactory.load())
 
   override protected def afterAll(): Unit = {
     try {

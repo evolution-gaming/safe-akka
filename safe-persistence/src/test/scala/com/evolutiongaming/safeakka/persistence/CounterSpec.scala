@@ -1,18 +1,17 @@
 package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
-
 import akka.actor.Status
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
-import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, SafeActorRef, Signal}
+import com.evolutiongaming.safeakka.persistence.PersistentBehavior as Behavior
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import org.scalatest.wordspec.AnyWordSpec
 
 class CounterSpec extends AnyWordSpec with ActorSpec {
-  import CounterSpec._
+  import CounterSpec.*
 
   "Counter" should {
 
@@ -51,30 +50,30 @@ class CounterSpec extends AnyWordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    def persistenceSetup(ctx: ActorCtx) = {
+    private def persistenceSetup(ctx: ActorCtx) = {
 
       ctx.setReceiveTimeout(300.millis)
 
       new PersistenceSetup[Counter, Counter, Cmd, Event] {
 
-        val persistenceId = UUID.randomUUID().toString
+        override val persistenceId: String = UUID.randomUUID().toString
 
-        val log = ActorLog(system, classOf[CounterSpec]).prefixed(persistenceId)
+        override val log: ActorLog = ActorLog(system, classOf[CounterSpec]).prefixed(persistenceId)
 
-        def journalId = None
+        override def journalId: Option[String] = None
 
-        def snapshotId = None
+        override def snapshotId: Option[String] = None
 
-        def onRecoveryStarted(
+        override def onRecoveryStarted(
           offer: Option[SnapshotOffer[Counter]],
           journaller: Journaller,
-          snapshotter: Snapshotter[Counter]) = new Recovering {
+          snapshotter: Snapshotter[Counter]): Recovering = new Recovering {
 
-          def state = offer map { _.snapshot } getOrElse Counter(0, 0)
+          override def state: Counter = offer map { _.snapshot } getOrElse Counter(0, 0)
 
-          def eventHandler(state: Counter, event: Event, seqNr: SeqNr) = state(event, seqNr)
+          override def eventHandler(state: Counter, event: Event, seqNr: SeqNr): Counter = state(event, seqNr)
 
-          def onCompleted(state: Counter, seqNr: SeqNr) = {
+          override def onCompleted(state: Counter, seqNr: SeqNr): Behavior[Cmd, Event] = {
 
             def behavior(counter: Counter): Behavior[Cmd, Event] = Behavior[Cmd, Event] { (signal, _) =>
               signal match {
@@ -119,14 +118,14 @@ class CounterSpec extends AnyWordSpec with ActorSpec {
             behavior(state)
           }
 
-          def onStopped(state: Counter, seqNr: SeqNr) = {}
+          override def onStopped(state: Counter, seqNr: SeqNr): Unit = {}
         }
 
-        def onStopped(seqNr: SeqNr): Unit = {}
+        override def onStopped(seqNr: SeqNr): Unit = {}
       }
     }
 
-    val ref = PersistentActorRef(persistenceSetup)
+    val ref: SafeActorRef[Cmd] = PersistentActorRef(persistenceSetup)
   }
 }
 

@@ -1,8 +1,8 @@
 package com.evolutiongaming.safeakka.persistence.async
 
-import com.evolutiongaming.safeakka.actor.ActorCtx
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog}
 import com.evolutiongaming.safeakka.persistence
-import com.evolutiongaming.safeakka.persistence._
+import com.evolutiongaming.safeakka.persistence.*
 
 object PersistenceSetupFromAsync {
 
@@ -21,34 +21,34 @@ object PersistenceSetupFromAsync {
 
     new PersistenceSetup[S, SS, C, E] {
 
-      def persistenceId = setup.persistenceId
+      override def persistenceId: String = setup.persistenceId
 
-      def log = setup.log
+      override def log: ActorLog = setup.log
 
-      def journalId = None
+      override def journalId: Option[String] = None
 
-      def snapshotId = None
+      override def snapshotId: Option[String] = None
 
-      def onRecoveryStarted(offer: Option[SnapshotOffer[S]], journaller: Journaller, snapshotter: Snapshotter[S]) = {
+      override def onRecoveryStarted(offer: Option[SnapshotOffer[S]], journaller: Journaller, snapshotter: Snapshotter[S]): Recovering = {
 
         val recovering = setup.onRecoveryStarted(offer, journaller, snapshotter)
 
         new persistence.Recovering[SS, C, E] {
-          def state = recovering.state
+          override def state: SS = recovering.state
 
-          def eventHandler(state: SS, event: E, seqNr: SeqNr) = {
+          override def eventHandler(state: SS, event: E, seqNr: SeqNr): SS = {
             recovering.eventHandler(state, event, seqNr)
           }
 
-          def onCompleted(state: SS, seqNr: SeqNr) = {
+          override def onCompleted(state: SS, seqNr: SeqNr): PersistentBehavior[C, E] = {
             val asyncHandler = recovering.onCompleted(state, seqNr)
             createBehavior(state, seqNr, asyncHandler)
           }
 
-          def onStopped(state: SS, seqNr: SeqNr) = recovering.onStopped(state, seqNr)
+          override def onStopped(state: SS, seqNr: SeqNr): Unit = recovering.onStopped(state, seqNr)
         }
       }
-      def onStopped(seqNr: SeqNr): Unit = setup.onStopped(seqNr)
+      override def onStopped(seqNr: SeqNr): Unit = setup.onStopped(seqNr)
     }
   }
 }

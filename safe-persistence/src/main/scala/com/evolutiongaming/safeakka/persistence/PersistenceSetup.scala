@@ -48,23 +48,23 @@ trait PersistenceSetup[S, SS, C, E] { self =>
 
     new PersistenceSetup[S, SSS, CC, EE] {
 
-      def persistenceId = self.persistenceId
+      override def persistenceId: String = self.persistenceId
 
-      def log = self.log
+      override def log: ActorLog = self.log
 
-      def journalId = self.journalId
+      override def journalId: Option[String] = self.journalId
 
-      def snapshotId = self.snapshotId
+      override def snapshotId: Option[String] = self.snapshotId
 
-      def onRecoveryStarted(
+      override def onRecoveryStarted(
         offer: Option[SnapshotOffer[S]],
         journaller: Journaller,
-        snapshotter: Snapshotter[S]) = {
+        snapshotter: Snapshotter[S]): Recovering = {
 
         f(self.onRecoveryStarted(offer, journaller, snapshotter))
       }
 
-      def onStopped(seqNr: SeqNr) = self.onStopped(seqNr)
+      override def onStopped(seqNr: SeqNr): Unit = self.onStopped(seqNr)
     }
   }
 }
@@ -97,36 +97,36 @@ trait Recovering[S, C, E] { self =>
 
   final def mapEvent[EE](fee: E => EE, fe: EE => E): Recovering[S, C, EE] = new Recovering[S, C, EE] {
 
-    def state = self.state
+    override def state: S = self.state
 
-    def eventHandler(state: S, event: EE, seqNr: SeqNr) = self.eventHandler(state, fe(event), seqNr)
+    override def eventHandler(state: S, event: EE, seqNr: SeqNr): S = self.eventHandler(state, fe(event), seqNr)
 
-    def onCompleted(state: S, seqNr: SeqNr) = self.onCompleted(state, seqNr).mapEvent(fee)
+    override def onCompleted(state: S, seqNr: SeqNr): PersistentBehavior[C, EE] = self.onCompleted(state, seqNr).mapEvent(fee)
 
-    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
+    override def onStopped(state: S, seqNr: SeqNr): Unit = self.onStopped(state, seqNr)
   }
 
 
   final def map[CC, EE](fc: CC => C, fee: E => EE, fe: EE => E): Recovering[S, CC, EE] = new Recovering[S, CC, EE] {
 
-    def state = self.state
+    override def state: S = self.state
 
-    def eventHandler(state: S, event: EE, seqNr: SeqNr) = self.eventHandler(state, fe(event), seqNr)
+    override def eventHandler(state: S, event: EE, seqNr: SeqNr): S = self.eventHandler(state, fe(event), seqNr)
 
-    def onCompleted(state: S, seqNr: SeqNr) = self.onCompleted(state, seqNr).map(fc, fee)
+    override def onCompleted(state: S, seqNr: SeqNr): PersistentBehavior[CC, EE] = self.onCompleted(state, seqNr).map(fc, fee)
 
-    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
+    override def onStopped(state: S, seqNr: SeqNr): Unit = self.onStopped(state, seqNr)
   }
 
   final def mapBehavior[CC](f: PersistentBehavior[C, E] => PersistentBehavior[CC, E]): Recovering[S, CC, E] = new Recovering[S, CC, E] {
 
-    def state = self.state
+    override def state: S = self.state
 
-    def eventHandler(state: S, event: E, seqNr: SeqNr) = self.eventHandler(state, event, seqNr)
+    override def eventHandler(state: S, event: E, seqNr: SeqNr): S = self.eventHandler(state, event, seqNr)
 
-    def onCompleted(state: S, seqNr: SeqNr) = f(self.onCompleted(state, seqNr))
+    override def onCompleted(state: S, seqNr: SeqNr): PersistentBehavior[CC, E] = f(self.onCompleted(state, seqNr))
 
-    def onStopped(state: S, seqNr: SeqNr) = self.onStopped(state, seqNr)
+    override def onStopped(state: S, seqNr: SeqNr): Unit = self.onStopped(state, seqNr)
   }
 }
 

@@ -5,17 +5,17 @@ import java.io.NotSerializableException
 import akka.serialization.Serializer
 
 class TestSerializer extends Serializer {
-  import com.evolutiongaming.safeakka.persistence.TestSerializer._
+  import com.evolutiongaming.safeakka.persistence.TestSerializer.*
 
   val identifier = 1234567890
 
-  def toBinary(o: AnyRef) = o match {
+  override def toBinary(o: AnyRef): Array[Byte] = o match {
     case Msg.Serializable    => Array.empty
     case Msg.NotSerializable => throw new NotSerializableException("")
     case Msg.Illegal         => throw new IllegalArgumentException("")
   }
 
-  def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]) = {
+  override def fromBinary(bytes: Array[Byte], manifest: Option[Class[?]]): AnyRef = {
     Msg.Serializable
   }
 
