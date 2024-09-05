@@ -4,21 +4,22 @@ import Dependencies.*
 // but it may not be source compatible (ie, it will be a minor release).
 ThisBuild / versionPolicyIntention := Compatibility.BinaryCompatible
 
-//TODO: after 3.1.0 release - clear up versionPolicyIgnored section
 /*
-versionPolicyReportDependencyIssues ignored dependencies when compared to safe-akka 3.0.0.
+versionPolicyReportDependencyIssues ignored dependencies when compared to safe-akka 3.1.0.
 All of those should not affect the library users, binary compatibility should be preserved.
+
+Remember to clear up after 3.1.1 release!
  */
 ThisBuild / versionPolicyIgnored ++= Seq(
-  //com.evolutiongaming:executor-tools_2.13: missing dependency
-  "com.evolutiongaming" %% "executor-tools",
-  //com.google.protobuf:protobuf-java: missing dependency
-  "com.google.protobuf" % "protobuf-java",
+  /*
+  Examples:
+
+  //com.chuusai:shapeless_2.13: missing dependency
+  "com.chuusai" %% "shapeless",
   //org.scala-lang.modules:scala-java8-compat_2.13:
-  //  incompatible version change from 0.9.0 to 1.0.0 (compatibility: early semantic versioning
+  //  incompatible version change from 0.9.0 to 1.0.0 (compatibility: early semantic versioning)
   "org.scala-lang.modules" %% "scala-java8-compat",
-  //org.typelevel:cats-macros_2.13: missing dependency
-  "org.typelevel" %% "cats-macros",
+   */
 )
 
 lazy val commonSettings = Seq(
