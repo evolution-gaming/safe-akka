@@ -15,13 +15,9 @@ object Behavior {
   def empty[A]: Behavior[A] = Rcv.empty
 
   def onMsg[A](onMsg: Signal.Msg[A] => Behavior[A]): Behavior[A] = Behavior[A] {
-    //workaround for Scala 3.3.0 compiler quirk:
-    //  asInstanceOf added because of a compilation error on pattern matching,
-    //  it complained about non-exhaustive match but suggested cases were non-existing
-    //
-    //old code: case signal: Signal.Msg[A] => onMsg(signal)
-    case signal: Signal.Msg[?] => onMsg(signal.asInstanceOf[Signal.Msg[A]])
-    case _: Signal.System      => same
+    //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+    case signal: Signal.Msg[A@unchecked] => onMsg(signal)
+    case _: Signal.System                => same
   }
 
   def stateless[A](onMsg: Signal[A] => Unit): Behavior[A] = Behavior[A] { signal =>
@@ -30,13 +26,9 @@ object Behavior {
   }
 
   def statelessOnMsg[A](onMsg: Signal.Msg[A] => Unit): Behavior[A] = stateless[A] {
-    //workaround for Scala 3.3.0 compiler quirk:
-    //  asInstanceOf added because of a compilation error on pattern matching,
-    //  it complained about non-exhaustive match but suggested cases were non-existing
-    //
-    //old code: case signal: Signal.Msg[A] => onMsg(signal)
-    case signal: Signal.Msg[?] => onMsg(signal.asInstanceOf[Signal.Msg[A]])
-    case _                     => ()
+    //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+    case signal: Signal.Msg[A@unchecked] => onMsg(signal)
+    case _                               => ()
   }
 
 

@@ -70,12 +70,8 @@ object AsyncBehavior {
         case Some(newState) => nextHandler(newState, queue)
         case None           =>
           val signals = queue collect {
-            //workaround for Scala 3.3.0 compiler quirk:
-            //  asInstanceOf added because of a compilation error on pattern matching,
-            //  it complained about non-exhaustive match but suggested cases were non-existing
-            //
-            //old code: case SignalAndHandler(signal: Signal.Msg[M], _) => signal
-            case SignalAndHandler(signal: Signal.Msg[?], _) => signal.asInstanceOf[Signal.Msg[M]] 
+            //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+            case SignalAndHandler(signal: Signal.Msg[M@unchecked], _) => signal
           }
           onStop(signals.toList)
           Behavior.stop
