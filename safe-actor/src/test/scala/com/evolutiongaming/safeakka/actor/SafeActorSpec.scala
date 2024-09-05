@@ -110,11 +110,7 @@ class SafeActorSpec extends AnyWordSpec with ActorSpec with Matchers {
     val setup: SetupActor[Cmd] = ctx => {
       val behavior = Behavior.stateless[Cmd] {
         case Signal.Msg(cmd, sender)   =>
-          //workaround for Scala 3.3.0 compiler quirk:
-          //  typedCmd assignment added because of a compilation error on pattern matching,
-          //  it complained about non-exhaustive match but suggested cases were non-existing
-          val typedCmd: Cmd = cmd
-          typedCmd match {
+          (cmd: Cmd) match {
             case Cmd.Watch(ref)   => ctx.watch(ref)
             case Cmd.Unwatch(ref) => ctx.unwatch(ref)
           }

@@ -341,12 +341,7 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     def behavior(ctx: ActorCtx) = AsyncBehavior[S, M](ctx, log, Nil, onStop) { (_, signal) =>
       implicit val ec: ExecutionContext = ExecutionContext.parasitic
       signal match {
-        //workaround for Scala 3.3.0 compiler quirk:
-        //  asInstanceOf added because of a compilation error on pattern matching,
-        //  it complained about non-exhaustive match but suggested cases were non-existing
-        //
-        //old code: case Signal.Msg(msg, sender) => msg match {
-        case Signal.Msg(msg, sender) => msg.asInstanceOf[M] match {
+        case Signal.Msg(msg, sender) => (msg: M) match {
 
           case M.Inc(idx) =>
             AsyncHandler now { (state: S) =>
