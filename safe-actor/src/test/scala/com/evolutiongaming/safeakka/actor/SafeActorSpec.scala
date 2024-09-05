@@ -110,7 +110,7 @@ class SafeActorSpec extends AnyWordSpec with ActorSpec with Matchers {
     val setup: SetupActor[Cmd] = ctx => {
       val behavior = Behavior.stateless[Cmd] {
         case Signal.Msg(cmd, sender)   =>
-          cmd match {
+          (cmd: Cmd) match {
             case Cmd.Watch(ref)   => ctx.watch(ref)
             case Cmd.Unwatch(ref) => ctx.unwatch(ref)
           }

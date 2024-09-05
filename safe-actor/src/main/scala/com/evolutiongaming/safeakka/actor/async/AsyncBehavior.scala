@@ -1,10 +1,9 @@
 package com.evolutiongaming.safeakka.actor.async
 
-import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
-import com.evolutiongaming.safeakka.actor._
+import com.evolutiongaming.safeakka.actor.*
 
 import scala.collection.immutable.Queue
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -24,7 +23,7 @@ object AsyncBehavior {
     final case class HandlerMsg(current: SignalAndHandler, handler: Try[Handler[S]])
     final case class NewStateMsg(current: SignalAndHandler, newState: Try[Option[S]])
 
-    implicit val ec = CurrentThreadExecutionContext
+    implicit val ec: ExecutionContext = ExecutionContext.parasitic
 
     def safe[A](f: => Future[A]) = {
       try f catch { case NonFatal(failure) => Future.failed(failure) }
@@ -70,7 +69,10 @@ object AsyncBehavior {
       onSuccess(newState, current, state, queue) {
         case Some(newState) => nextHandler(newState, queue)
         case None           =>
-          val signals = queue collect { case SignalAndHandler(signal: Signal.Msg[M], _) => signal }
+          val signals = queue collect {
+            //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+            case SignalAndHandler(signal: Signal.Msg[M@unchecked], _) => signal
+          }
           onStop(signals.toList)
           Behavior.stop
       }

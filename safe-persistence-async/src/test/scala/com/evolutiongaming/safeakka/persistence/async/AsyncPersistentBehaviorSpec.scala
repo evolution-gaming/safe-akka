@@ -1,25 +1,23 @@
 package com.evolutiongaming.safeakka.persistence.async
 
 import java.util.UUID
-
 import akka.actor.ActorRef
-import cats.implicits._
-import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
+import cats.implicits.*
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog}
-import com.evolutiongaming.safeakka.persistence._
+import com.evolutiongaming.safeakka.persistence.*
 import com.evolutiongaming.safeakka.persistence.async.AsyncPersistentBehavior.Metrics
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration.*
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NoStackTrace
 import scala.util.{Success, Try}
 
 class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matchers {
-  import AsyncPersistentBehaviorSpec._
+  import AsyncPersistentBehaviorSpec.*
 
   type S = Counter
   type C = Cmd
@@ -124,7 +122,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       val PersistentBehavior.Rcv(onSignal1, _) = onSignal0(
         PersistenceSignal.Cmd(Cmd(Event.Inc), ActorRef.noSender),
         0L,
-      )
+      ): @unchecked //@unchecked added to work around Scala 3.3.0 compilation problems
       val handlers1 = expectMsgType[asyncPersistenceBehavior.Handlers]
       handlers1.values.size shouldBe 1
       completeHandlers(handlers1)
@@ -132,14 +130,14 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
       val PersistentBehavior.Rcv(onSignal2, _) = onSignal1(
         PersistenceSignal.Cmd(Cmd(Event.Dec), ActorRef.noSender),
         1L,
-      )
+      ): @unchecked //@unchecked added to work around Scala 3.3.0 compilation problems
       val handlers2 = expectMsgType[asyncPersistenceBehavior.Handlers]
       handlers2.values.size shouldBe 1
 
       val PersistentBehavior.Rcv(onSignal3, _) = onSignal2(
         PersistenceSignal.Cmd(Cmd(Event.Inc), ActorRef.noSender),
         2L,
-      )
+      ): @unchecked //@unchecked added to work around Scala 3.3.0 compilation problems
       onSignal3(
         PersistenceSignal.Cmd(Cmd(Event.Inc), ActorRef.noSender),
         2L,
@@ -189,7 +187,7 @@ class AsyncPersistentBehaviorSpec extends AnyWordSpec with ActorSpec with Matche
           }
 
           def onChange(events: Future[Nel[E]]) = {
-            implicit val ec = CurrentThreadExecutionContext
+            implicit val ec: ExecutionContext = ExecutionContext.parasitic
             for {
               events <- events
             } yield (state: S, seqNr: SeqNr) => {

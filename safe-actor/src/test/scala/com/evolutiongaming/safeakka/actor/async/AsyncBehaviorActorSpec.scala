@@ -1,11 +1,10 @@
 package com.evolutiongaming.safeakka.actor.async
 
 import akka.actor.{ActorIdentity, Identify}
-import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
-import com.evolutiongaming.safeakka.actor._
+import com.evolutiongaming.safeakka.actor.*
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NoStackTrace
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -340,9 +339,9 @@ class AsyncBehaviorActorSpec extends AnyWordSpec with ActorSpec {
     }
 
     def behavior(ctx: ActorCtx) = AsyncBehavior[S, M](ctx, log, Nil, onStop) { (_, signal) =>
-      implicit val ec = CurrentThreadExecutionContext
+      implicit val ec: ExecutionContext = ExecutionContext.parasitic
       signal match {
-        case Signal.Msg(msg, sender) => msg match {
+        case Signal.Msg(msg, sender) => (msg: M) match {
 
           case M.Inc(idx) =>
             AsyncHandler now { (state: S) =>

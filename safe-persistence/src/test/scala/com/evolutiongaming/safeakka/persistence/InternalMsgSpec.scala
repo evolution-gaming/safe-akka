@@ -1,11 +1,10 @@
 package com.evolutiongaming.safeakka.persistence
 
 import java.util.UUID
-
 import akka.actor.{ActorRef, Status}
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
-import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender}
+import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, SafeActorRef, Sender}
 import com.evolutiongaming.safeakka.persistence.PersistentBehavior.Rcv
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -26,28 +25,28 @@ class InternalMsgSpec extends AnyWordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    val persistenceId = UUID.randomUUID().toString
+    private val persistenceId = UUID.randomUUID().toString
 
-    def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
+    private def persistenceSetup(ctx: ActorCtx) = new PersistenceSetup[State, State, Cmd, Event] {
 
-      val log = ActorLog.empty.prefixed(persistenceId)
+      override val log: ActorLog = ActorLog.empty.prefixed(persistenceId)
 
-      def persistenceId = Scope.this.persistenceId
+      override def persistenceId: String = Scope.this.persistenceId
 
-      def journalId = None
+      override def journalId: Option[String] = None
 
-      def snapshotId = None
+      override def snapshotId: Option[String] = None
 
-      def onRecoveryStarted(
+      override def onRecoveryStarted(
         offer: Option[SnapshotOffer[State]],
         journaller: Journaller,
-        snapshotter: Snapshotter[State]) = new Recovering {
+        snapshotter: Snapshotter[State]): Recovering = new Recovering {
 
-        def state = 0
+        override def state = 0
 
-        def eventHandler(state: State, event: Event, seqNr: SeqNr) = state + event
+        override def eventHandler(state: State, event: Event, seqNr: SeqNr): State = state + event
 
-        def onCompleted(state: State, seqNr: SeqNr) = {
+        override def onCompleted(state: State, seqNr: SeqNr): PersistentBehavior[Cmd, Event] = {
 
           case class Internal(sender: Sender)
 
@@ -90,13 +89,13 @@ class InternalMsgSpec extends AnyWordSpec with ActorSpec {
           behavior(state)
         }
 
-        def onStopped(state: State, seqNr: SeqNr) = {}
+        override def onStopped(state: State, seqNr: SeqNr): Unit = {}
       }
 
-      def onStopped(seqNr: SeqNr) = {}
+      override def onStopped(seqNr: SeqNr): Unit = {}
     }
 
-    val ref = PersistentActorRef(persistenceSetup)
+    val ref: SafeActorRef[Cmd] = PersistentActorRef(persistenceSetup)
 
     sealed trait Cmd
     object Cmd {

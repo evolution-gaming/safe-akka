@@ -15,8 +15,9 @@ object Behavior {
   def empty[A]: Behavior[A] = Rcv.empty
 
   def onMsg[A](onMsg: Signal.Msg[A] => Behavior[A]): Behavior[A] = Behavior[A] {
-    case signal: Signal.Msg[A] => onMsg(signal)
-    case _: Signal.System      => same
+    //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+    case signal: Signal.Msg[A@unchecked] => onMsg(signal)
+    case _: Signal.System                => same
   }
 
   def stateless[A](onMsg: Signal[A] => Unit): Behavior[A] = Behavior[A] { signal =>
@@ -25,8 +26,9 @@ object Behavior {
   }
 
   def statelessOnMsg[A](onMsg: Signal.Msg[A] => Unit): Behavior[A] = stateless[A] {
-    case signal: Signal.Msg[A] => onMsg(signal)
-    case _                     => ()
+    //@unchecked needed to work around a Scala 3.3.0 compiler quirk with pattern matching
+    case signal: Signal.Msg[A@unchecked] => onMsg(signal)
+    case _                               => ()
   }
 
 
@@ -43,7 +45,7 @@ object Behavior {
 
   object Rcv {
 
-    private val Empty: Rcv[Any] = Rcv { _: Any => same }
+    private val Empty: Rcv[Any] = Rcv { (_: Any) => same }
 
     def empty[A]: Rcv[A] = Empty
   }

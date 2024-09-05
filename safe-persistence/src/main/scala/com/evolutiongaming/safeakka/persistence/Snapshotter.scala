@@ -1,7 +1,9 @@
 package com.evolutiongaming.safeakka.persistence
 
 import akka.actor.ActorRef
-import akka.persistence._
+import akka.persistence.*
+
+import scala.annotation.nowarn
 
 trait Snapshotter[-A] { self =>
 
@@ -29,13 +31,14 @@ trait Snapshotter[-A] { self =>
 
   final def map[B](f: B => A): Snapshotter[B] = new Snapshotter[B] {
 
-    def save(snapshot: B) = self.save(f(snapshot))
+    @deprecated("use another `save` with seqNr as argument", "2.2.1")
+    override def save(snapshot: B): Unit = self.save(f(snapshot))
 
-    def save(seqNr: SeqNr, snapshot: B) = self.save(seqNr, f(snapshot))
+    override def save(seqNr: SeqNr, snapshot: B): Unit = self.save(seqNr, f(snapshot))
 
-    def delete(seqNr: SeqNr) = self.delete(seqNr)
+    override def delete(seqNr: SeqNr): Unit = self.delete(seqNr)
 
-    def delete(criteria: SnapshotSelectionCriteria) = self.delete(criteria)
+    override def delete(criteria: SnapshotSelectionCriteria): Unit = self.delete(criteria)
   }
 }
 
@@ -43,13 +46,14 @@ object Snapshotter {
 
   def empty[S]: Snapshotter[S] = new Snapshotter[S] {
 
-    def save(snapshot: S) = {}
+    @deprecated("use another `save` with seqNr as argument", "2.2.1")
+    override def save(snapshot: S): Unit = {}
 
-    def save(seqNr: SeqNr, snapshot: S) = {}
+    override def save(seqNr: SeqNr, snapshot: S): Unit = {}
 
-    def delete(sequenceNr: SeqNr) = {}
+    override def delete(sequenceNr: SeqNr): Unit = {}
 
-    def delete(criteria: SnapshotSelectionCriteria) = {}
+    override def delete(criteria: SnapshotSelectionCriteria): Unit = {}
   }
 
 
@@ -60,12 +64,13 @@ object Snapshotter {
 
   def apply[S](ref: ActorRef): Snapshotter[S] = new Snapshotter[S] {
 
-    def save(snapshot: S) = ref.tell(snapshot, ActorRef.noSender)
+    @deprecated("use another `save` with seqNr as argument", "2.2.1")
+    override def save(snapshot: S): Unit = ref.tell(snapshot, ActorRef.noSender)
 
-    def save(seqNr: SeqNr, snapshot: S) = save(snapshot)
+    override def save(seqNr: SeqNr, snapshot: S): Unit = save(snapshot): @nowarn("cat=deprecation")
 
-    def delete(seqNr: SeqNr) = {}
+    override def delete(seqNr: SeqNr): Unit = {}
 
-    def delete(criteria: SnapshotSelectionCriteria) = {}
+    override def delete(criteria: SnapshotSelectionCriteria): Unit = {}
   }
 }

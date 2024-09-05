@@ -1,22 +1,48 @@
-import Dependencies._
+import Dependencies.*
+
+// Your next release will be binary compatible with the previous one,
+// but it may not be source compatible (ie, it will be a minor release).
+ThisBuild / versionPolicyIntention := Compatibility.BinaryCompatible
+
+//TODO: after 3.1.0 release - clear up versionPolicyIgnored section
+/*
+versionPolicyReportDependencyIssues ignored dependencies when compared to safe-akka 3.0.0.
+All of those should not affect the library users, binary compatibility should be preserved.
+ */
+ThisBuild / versionPolicyIgnored ++= Seq(
+  //com.evolutiongaming:executor-tools_2.13: missing dependency
+  "com.evolutiongaming" %% "executor-tools",
+  //com.google.protobuf:protobuf-java: missing dependency
+  "com.google.protobuf" % "protobuf-java",
+  //org.scala-lang.modules:scala-java8-compat_2.13:
+  //  incompatible version change from 0.9.0 to 1.0.0 (compatibility: early semantic versioning
+  "org.scala-lang.modules" %% "scala-java8-compat",
+  //org.typelevel:cats-macros_2.13: missing dependency
+  "org.typelevel" %% "cats-macros",
+)
 
 lazy val commonSettings = Seq(
   organization := "com.evolutiongaming",
-  homepage := Some(url("http://github.com/evolution-gaming/safe-akka")),
+  homepage := Some(url("https://github.com/evolution-gaming/safe-akka")),
   startYear := Some(2017),
   organizationName := "Evolution",
-  organizationHomepage := Some(url("http://evolution.com")),
+  organizationHomepage := Some(url("https://evolution.com")),
   scalaVersion := crossScalaVersions.value.head,
-  crossScalaVersions := Seq("2.13.4", "2.12.12"),
+  crossScalaVersions := Seq("2.13.14", "3.3.3"),
+  Compile / scalacOptions ++= {
+    if (scalaBinaryVersion.value == "2.13") {
+      Seq(
+        "-Xsource:3"
+      )
+    } else Seq.empty
+  },
   Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-no-link-warnings"),
   publishTo := Some(Resolver.evolutionReleases),
-  resolvers += Resolver.bintrayRepo("dnvriend", "maven"),
   licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT"))),
   releaseCrossBuild := true)
 
-val alias: Seq[sbt.Def.Setting[_]] =
-  //  addCommandAlias("check", "all versionPolicyCheck Compile/doc") ++
-  addCommandAlias("check", "show version") ++
+val alias: Seq[sbt.Def.Setting[?]] =
+  addCommandAlias("check", "+all versionPolicyCheck Compile/doc") ++
     addCommandAlias("build", "+all compile test")
 
 lazy val safeAkka = (project
@@ -42,7 +68,9 @@ lazy val safeActor = (project
       Akka.stream % Test,
       Akka.`persistence-query` % Test,
       scalatest % Test,
-      `executor-tools`,
+      Akka.slf4j % Test,
+      `logback-classic` % Test,
+      Slf4j.api % Test,
       nel)))
 
 lazy val safePersistence = (project
@@ -51,14 +79,9 @@ lazy val safePersistence = (project
   settings commonSettings
   dependsOn safeActor % "test->test;compile->compile"
   settings (
-    scalacOptsFailOnWarn := Some(false),
     libraryDependencies ++= Seq(
       Akka.persistence,
-      Akka.slf4j % Test,
-      `akka-persistence-inmemory` % Test,
-      `logback-classic` % Test,
-      Slf4j.api % Test,
-      Slf4j.`log4j-over-slf4j` % Test)))
+      Akka.`persistence-tck` % Test)))
 
 lazy val safePersistenceAsync = (project
   in file("safe-persistence-async")

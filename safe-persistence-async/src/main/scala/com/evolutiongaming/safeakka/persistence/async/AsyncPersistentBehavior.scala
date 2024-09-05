@@ -2,14 +2,13 @@ package com.evolutiongaming.safeakka.persistence.async
 
 import akka.actor.{ActorRef, ClassicActorContextProvider, ClassicActorSystemProvider}
 import akka.stream.{Materializer, QueueOfferResult, SystemMaterializer}
-import cats.implicits._
-import com.evolutiongaming.concurrent.CurrentThreadExecutionContext
+import cats.implicits.*
 import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Sender, Signal}
-import com.evolutiongaming.safeakka.persistence._
-import com.evolutiongaming.util.TryHelper._
+import com.evolutiongaming.safeakka.persistence.*
+import com.evolutiongaming.util.TryHelper.*
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.immutable.Queue
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.control.NonFatal
@@ -27,7 +26,7 @@ private[async] class AsyncPersistentBehavior[S, C, E](
   materializer: Materializer,
 ) {
 
-  import AsyncPersistentBehavior._
+  import AsyncPersistentBehavior.*
 
   type H = Handler[S, E]
 
@@ -46,7 +45,7 @@ private[async] class AsyncPersistentBehavior[S, C, E](
       def errorMsg = s"failed to enqueue ${elem.signal}"
 
       val future = {
-        implicit val ec = CurrentThreadExecutionContext
+        implicit val ec: ExecutionContext = ExecutionContext.parasitic
         elem.handler
           .map { x =>
             SignalAndHandler(elem.signal, Success(x))
@@ -90,6 +89,7 @@ private[async] class AsyncPersistentBehavior[S, C, E](
       def onHandlers(hs: Nel[SignalAndHandler], promise: Promise[Unit]) = {
         type R = CmdResult.NonStop[S, E]
 
+        @nowarn("cat=deprecation")
         @tailrec
         def iterHandlers(
           state: S,

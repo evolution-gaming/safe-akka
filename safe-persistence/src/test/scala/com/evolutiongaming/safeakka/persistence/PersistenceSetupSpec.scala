@@ -8,28 +8,28 @@ import org.scalatest.matchers.should.Matchers
 
 class PersistenceSetupSpec extends AnyFunSuite with Matchers {
 
-  val actorLog = ActorLog.empty.prefixed("PersistenceSetupSpec")
+  val actorLog: ActorLog = ActorLog.empty.prefixed("PersistenceSetupSpec")
 
-  val setup = new PersistenceSetup[Unit, Unit, String, String] {
+  val setup: PersistenceSetup[Unit, Unit, String, String] = new PersistenceSetup[Unit, Unit, String, String] {
 
-    def persistenceId = "persistenceId"
+    override def persistenceId: String = "persistenceId"
 
-    def log = actorLog
+    override def log: ActorLog = actorLog
 
-    def journalId = Some("journalId")
+    override def journalId: Option[String] = Some("journalId")
 
-    def snapshotId = Some("journalId")
+    override def snapshotId: Option[String] = Some("journalId")
 
-    def onRecoveryStarted(
+    override def onRecoveryStarted(
       offer: Option[SnapshotOffer[Unit]],
       journaller: Journaller,
-      snapshotter: Snapshotter[Unit]) = new Recovering {
+      snapshotter: Snapshotter[Unit]): Recovering = new Recovering {
 
-      def state = {}
+      override def state: Unit = {}
 
-      def eventHandler(state: Unit, event: String, seqNr: SeqNr) = {}
+      override def eventHandler(state: Unit, event: String, seqNr: SeqNr): Unit = {}
 
-      def onCompleted(state: Unit, seqNr: SeqNr) = {
+      override def onCompleted(state: Unit, seqNr: SeqNr): PersistentBehavior[String, String] = {
         def behavior(): PersistentBehavior[String, String] = PersistentBehavior[String, String] { (signal, _) =>
           signal match {
             case PersistenceSignal.Cmd(cmd, _) => PersistentBehavior.persist(Nel(Record(cmd)), _ => behavior(), _ => ())
@@ -39,9 +39,9 @@ class PersistenceSetupSpec extends AnyFunSuite with Matchers {
 
         behavior()
       }
-      def onStopped(state: Unit, seqNr: SeqNr) = {}
+      override def onStopped(state: Unit, seqNr: SeqNr): Unit = {}
     }
-    def onStopped(seqNr: SeqNr) = {}
+    override def onStopped(seqNr: SeqNr): Unit = {}
   }
 
   test("map") {
@@ -86,7 +86,7 @@ class PersistenceSetupSpec extends AnyFunSuite with Matchers {
     persist.records.map(_.event) shouldEqual Nel(0)
   }
 
-  private def compare(a: PersistenceSetup[_, _, _, _], b: PersistenceSetup[_, _, _, _]) = {
+  private def compare(a: PersistenceSetup[?, ?, ?, ?], b: PersistenceSetup[?, ?, ?, ?]) = {
     a.persistenceId shouldEqual b.persistenceId
     a.journalId shouldEqual b.journalId
     a.snapshotId shouldEqual b.snapshotId

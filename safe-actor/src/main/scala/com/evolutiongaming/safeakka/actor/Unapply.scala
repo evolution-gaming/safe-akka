@@ -9,17 +9,11 @@ trait Unapply[A] {
 
 object Unapply {
 
-  implicit def apply[A](implicit tag: ClassTag[A]): Unapply[A] = new Unapply[A] {
-    def unapply(any: Any) = tag unapply any
-  }
+  implicit def apply[A](implicit tag: ClassTag[A]): Unapply[A] = (any: Any) => tag unapply any
 
-  def apply[A](f: Any => Option[A]): Unapply[A] = new Unapply[A] {
-    def unapply(any: Any) = f(any)
-  }
+  def apply[A](f: Any => Option[A]): Unapply[A] = (any: Any) => f(any)
 
-  def pf[A](pf: PartialFunction[Any, A]): Unapply[A] = new Unapply[A] {
-    def unapply(any: Any) = pf.lift(any)
-  }
+  def pf[A](pf: PartialFunction[Any, A]): Unapply[A] = (any: Any) => pf.lift(any)
 
   def of[A](implicit unapply: Unapply[A]): Unapply[A] = unapply
 

@@ -8,7 +8,7 @@ import com.evolutiongaming.nel.Nel
 import com.evolutiongaming.safeakka.actor.util.ActorSpec
 import com.evolutiongaming.safeakka.actor.{ActorCtx, ActorLog, Signal}
 import com.evolutiongaming.safeakka.persistence.TestSerializer.Msg
-import com.evolutiongaming.safeakka.persistence.{PersistentBehavior => Behavior}
+import com.evolutiongaming.safeakka.persistence.PersistentBehavior as Behavior
 import org.scalatest.wordspec.AnyWordSpec
 
 import scala.util.{Failure, Success}
@@ -52,7 +52,7 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
       val events = (1 to 1000).toList
       ref ! Cmd.Append(events)
       expectMsg(RecoveryStarted(None))
-      expectMsgAllOf(events.map(event => Success((event, event.toLong))): _*)
+      expectMsgAllOf(events.map(event => Success((event, event.toLong))) *)
       expectMsgType[State]
 
       ref ! PoisonPill
@@ -105,15 +105,15 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
 
   private trait Scope extends ActorScope {
 
-    val persistenceId = UUID.randomUUID().toString
+    private val persistenceId = UUID.randomUUID().toString
 
     val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
       def persistenceId = Scope.this.persistenceId
 
-      def journalId = None
+      override def journalId: Option[String] = None
 
-      def snapshotId = None
+      override def snapshotId: Option[String] = None
 
       def log = ActorLog.empty.prefixed(persistenceId)
 
@@ -220,18 +220,20 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
 
   private trait FailureScope extends ActorScope {
 
+    //if you try to make the Event type alias here private as IDEA suggests, Scala 3 compiler crashes:
+    //https://github.com/scala/scala3/issues/21543
     type Event = TestSerializer.Msg
-    type State = Unit
+    private type State = Unit
     case class Cmd(events: Nel[Event])
 
 
-    val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
+    private val persistenceSetup = (_: ActorCtx) => new PersistenceSetup[State, State, Cmd, Event] {
 
       val persistenceId = UUID.randomUUID().toString
 
-      def journalId = None
+      override def journalId: Option[String] = None
 
-      def snapshotId = None
+      override def snapshotId: Option[String] = None
 
       def log = ActorLog.empty.prefixed(persistenceId)
 
@@ -272,7 +274,7 @@ class SafePersistentActorSpec extends AnyWordSpec with ActorSpec {
         }
       }
 
-      def onStopped(seqNr: SeqNr) = {}
+      def onStopped(seqNr: SeqNr): Unit = {}
     }
 
     val ref = PersistentActorRef(persistenceSetup)
