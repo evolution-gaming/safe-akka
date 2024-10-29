@@ -39,8 +39,7 @@ lazy val commonSettings = Seq(
   },
   Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-no-link-warnings"),
   publishTo := Some(Resolver.evolutionReleases),
-  licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT"))),
-  releaseCrossBuild := true)
+  licenses := Seq(("MIT", url("https://opensource.org/licenses/MIT"))))
 
 val alias: Seq[sbt.Def.Setting[?]] =
   addCommandAlias("check", "+all versionPolicyCheck Compile/doc") ++
