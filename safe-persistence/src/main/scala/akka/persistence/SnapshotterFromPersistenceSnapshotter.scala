@@ -1,14 +1,24 @@
 package akka.persistence
 
+import akka.persistence.SnapshotProtocol.SaveSnapshot
 import com.evolutiongaming.safeakka
+import com.evolutiongaming.safeakka.persistence.SeqNr
 
-/*
-The class has been renamed to SnapshotterInterop by Yaroslav Klymko after 3.0.0 release, but the changes never got
-to release.
-The class has been restored with deprecation to satisfy MiMa bincompat report.
- */
-
-@deprecated(message = "use SnapshotterInterop", since = "3.1.0")
 object SnapshotterFromPersistenceSnapshotter {
-  def apply[A](snapshotter: Snapshotter): safeakka.persistence.Snapshotter[A] = SnapshotterInterop.apply(snapshotter)
+
+  def apply[A](
+    snapshotter: Snapshotter
+  ): safeakka.persistence.Snapshotter[A] = new safeakka.persistence.Snapshotter[A] {
+
+    def save(snapshot: A) = snapshotter.saveSnapshot(snapshot)
+
+    def save(seqNr: SeqNr, snapshot: A) = {
+      val saveSnapshot = SaveSnapshot(SnapshotMetadata(snapshotter.snapshotterId, seqNr), snapshot)
+      snapshotter.snapshotStore.tell(saveSnapshot, snapshotter.self)
+    }
+
+    def delete(seqNr: SeqNr) = snapshotter.deleteSnapshot(seqNr)
+
+    def delete(criteria: SnapshotSelectionCriteria) = snapshotter.deleteSnapshots(criteria)
+  }
 }
