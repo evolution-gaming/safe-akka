@@ -14,7 +14,7 @@ object Dependencies {
   }
 
   object Cats {
-    private val version = "2.12.0"
+    private val version = "2.13.0"
     val core = "org.typelevel" %% "cats-core" % version
   }
 
