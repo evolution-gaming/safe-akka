@@ -1,7 +1,7 @@
 # Safe Akka
 [![Build Status](https://github.com/evolution-gaming/safe-akka/workflows/CI/badge.svg)](https://github.com/evolution-gaming/safe-akka/actions?query=workflow%3ACI)
 [![Coverage Status](https://coveralls.io/repos/github/evolution-gaming/safe-akka/badge.svg?branch=master)](https://coveralls.io/github/evolution-gaming/safe-akka?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8457f5d789694d31b8e8c34e6b9f5e14)](https://www.codacy.com/app/t3hnar/safe-akka?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=evolution-gaming/safe-akka&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/735356614683409ea3f65e179708c20b)](https://app.codacy.com/gh/evolution-gaming/safe-akka/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Version](https://img.shields.io/badge/version-click-blue)](https://evolution.jfrog.io/artifactory/api/search/latestVersion?g=com.evolutiongaming&a=safe-akka_2.13&repos=public)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://opensource.org/licenses/MIT)
 
