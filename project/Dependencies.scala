@@ -24,6 +24,6 @@ object Dependencies {
   }
 
   val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.19"
-  val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.5.18"
+  val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.5.19"
   val nel                         = "com.evolutiongaming" %% "nel"                       % "1.3.5"
 }
