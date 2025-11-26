@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
   organizationName := "Evolution",
   organizationHomepage := Some(url("https://evolution.com")),
   scalaVersion := crossScalaVersions.value.head,
-  crossScalaVersions := Seq("2.13.16", "3.3.4"),
+  crossScalaVersions := Seq("2.13.18", "3.3.4"),
   Compile / scalacOptions ++= {
     if (scalaBinaryVersion.value == "2.13") Seq("-Xsource:3")
     else Seq("-explain", "-explain-types")
