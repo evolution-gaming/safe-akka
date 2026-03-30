@@ -23,7 +23,7 @@ object Dependencies {
     val api                = "org.slf4j" % "slf4j-api"        % version
   }
 
-  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.19"
+  val scalatest                   = "org.scalatest"       %% "scalatest"                 % "3.2.20"
   val `logback-classic`           = "ch.qos.logback"       % "logback-classic"           % "1.5.32"
   val nel                         = "com.evolutiongaming" %% "nel"                       % "1.3.5"
 }
