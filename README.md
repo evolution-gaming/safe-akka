@@ -1,7 +1,7 @@
 # Safe Akka
-[![Build Status](https://github.com/evolution-gaming/safe-akka/workflows/CI/badge.svg)](https://github.com/evolution-gaming/safe-akka/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/github/evolution-gaming/safe-akka/badge.svg?branch=master)](https://coveralls.io/github/evolution-gaming/safe-akka?branch=master)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/735356614683409ea3f65e179708c20b)](https://app.codacy.com/gh/evolution-gaming/safe-akka/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
+> ⚠️ **DEPRECATED: this project is no longer maintained.** There will be no further releases, bug fixes, or dependency updates, and the repository is archived. The last published version is `4.0.0`, which remains available in the usual repositories. For typed actors, consider migrating to [Akka Typed](https://doc.akka.io/libraries/akka-core/current/typed/index.html) or [Apache Pekko](https://pekko.apache.org/).
+
 [![Version](https://img.shields.io/badge/version-click-blue)](https://evolution.jfrog.io/artifactory/api/search/latestVersion?g=com.evolutiongaming&a=safe-akka_2.13&repos=public)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellowgreen.svg)](https://opensource.org/licenses/MIT)
 
